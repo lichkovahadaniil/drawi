@@ -10,8 +10,10 @@ const ALLOWED_CONTENT_TYPES = new Set([
 ]);
 
 // assets are stored in the bucket under the /uploads path
-function getAssetObjectName(uploadId: string) {
-  return `uploads/${uploadId.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 140)}`;
+function getAssetObjectName(roomId: string, uploadId: string) {
+  const safeRoomId = roomId.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+  const safeUploadId = uploadId.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 140);
+  return `rooms/${safeRoomId}/uploads/${safeUploadId}`;
 }
 
 declare global {
@@ -23,8 +25,10 @@ declare global {
 // when a user uploads an asset, we store it in the bucket. we only allow image and video assets.
 export async function handleAssetUpload(request: IRequest, env: Env) {
   const uploadId = request.params.uploadId;
+  const roomId = request.params.roomId;
   if (!uploadId) return error(400, "Missing upload id");
-  const objectName = getAssetObjectName(uploadId);
+  if (!roomId) return error(400, "Missing room id");
+  const objectName = getAssetObjectName(roomId, uploadId);
 
   const contentType = request.headers.get("content-type") ?? "";
   if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
@@ -50,8 +54,10 @@ export async function handleAssetUpload(request: IRequest, env: Env) {
 // when a user downloads an asset, we retrieve it from the bucket. we also cache the response for performance.
 export async function handleAssetDownload(request: IRequest, env: Env, ctx: ExecutionContext) {
   const uploadId = request.params.uploadId;
+  const roomId = request.params.roomId;
   if (!uploadId) return error(400, "Missing upload id");
-  const objectName = getAssetObjectName(uploadId);
+  if (!roomId) return error(400, "Missing room id");
+  const objectName = getAssetObjectName(roomId, uploadId);
 
   // if we have a cached response for this request (automatically handling ranges etc.), return it
   const cacheKey = new Request(request.url, { headers: request.headers });

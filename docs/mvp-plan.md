@@ -10,7 +10,7 @@
 
 ### 0. Repository Guardrails
 
-- [ ] Инициализировать git в `/Users/daniillickovaha/Documents/drawi`. Заблокировано текущей средой: `git init` вернул `Operation not permitted`.
+- [x] Git repository present in `/Users/daniillickovaha/Documents/drawi` (`HEAD -> main`, commit `init`). Первичный `git init` вернул `Operation not permitted`, но `.git` уже существует; destructive git operations не выполнялись.
 - [x] Создать `.gitignore` с исключениями для `node_modules`, `.next`, `.wrangler/state`, build outputs, `.env*` кроме `.env.example`, `.DS_Store`, `tldraw-main/`, `livekit-master/`.
 - [x] Создать `docs/mvp-plan.md` и вставить этот план с чекбоксами.
 - [x] Зафиксировать в README, что `tldraw-main/` и `livekit-master/` используются только как reference source.
@@ -85,11 +85,11 @@
 ### 8. Ending, Checkpoints, Restore
 
 - [x] Tutor action `End session` сделать идемпотентной.
-- [x] При завершении создать immutable session-end checkpoint metadata и storage key.
+- [ ] При завершении создать immutable session-end checkpoint JSON в R2. Сейчас реализованы metadata и storage key; payload upload ещё открыт.
 - [x] Metadata checkpoint хранить в Postgres.
 - [x] Добавить tutor-only ручную кнопку `Create checkpoint`.
 - [x] После завершения board остаётся owned у tutor, tutor получает `created`, student получает `learned`, session status становится `ended`.
-- [x] Реализовать `Restore as new board` metadata flow.
+- [ ] Реализовать `Restore as new board` с загрузкой snapshot в новую room. Сейчас реализован metadata/provenance flow.
 - [x] Не делать destructive live rollback.
 
 ### 9. UI Polish And Accessibility
@@ -108,7 +108,8 @@
 - [ ] Integration tests с real test Postgres.
 - [ ] Playwright E2E с двумя browser contexts.
 - [ ] Manual local smoke.
-- [ ] Required checks pass: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, sync worker build, Playwright critical E2E.
+- [x] Automated checks pass: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, sync worker dry-run build.
+- [ ] Playwright critical E2E passes.
 
 ## Assumptions
 

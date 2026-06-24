@@ -7,7 +7,7 @@
     "dev:web": "pnpm --filter @drawi/web dev",
     "dev:sync": "pnpm --filter @drawi/sync-worker dev",
     "dev:livekit": "livekit-server --dev",
-    "dev:db": "docker compose up postgres",
+    "dev:db": "scripts/dev-db.sh",
     "build": "pnpm --filter @drawi/web build && pnpm --filter @drawi/sync-worker build",
     "lint": "eslint .",
     "typecheck": "pnpm --filter @drawi/web typecheck && pnpm --filter @drawi/sync-worker typecheck",

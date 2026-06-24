@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { CollaborativeBoard } from "@/features/board/collaborative-board";
 import { PrivateNotesPanel } from "@/features/board/private-notes-panel";
 import { LiveKitPanel } from "@/features/session/livekit-panel";
-import { canEditBoard } from "@/server/domain/permissions";
 import { getMyNote } from "@/server/services/notes-actions";
 import { getSessionPage } from "@/server/services/queries";
 import { endSessionAction, leaveSessionAction } from "@/server/services/session-actions";
@@ -21,7 +20,7 @@ export default async function SessionPage({
   if (!data || !data.currentMembership) notFound();
 
   const isTutor = data.currentMembership.role === "tutor";
-  const canEdit = canEditBoard(data.user, data.board, []);
+  const canEdit = isTutor || data.currentMembership.canEditBoard;
   const noteBody = await getMyNote(data.board.id);
   const inviteUrl = invite
     ? `${process.env.APP_URL ?? "http://localhost:3000"}/join/${invite}`

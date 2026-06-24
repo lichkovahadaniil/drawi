@@ -14,7 +14,10 @@ export function CollaborativeBoard({
   mode: "edit" | "view";
 }) {
   const syncOrigin = process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL ?? "http://localhost:8787";
-  const assets = useMemo<TLAssetStore>(() => createAssetStore(syncOrigin), [syncOrigin]);
+  const assets = useMemo<TLAssetStore>(
+    () => createAssetStore(syncOrigin, roomId),
+    [syncOrigin, roomId],
+  );
 
   const store = useSync({
     uri: async () => {
@@ -45,20 +48,20 @@ export function CollaborativeBoard({
   );
 }
 
-function createAssetStore(syncOrigin: string): TLAssetStore {
+function createAssetStore(syncOrigin: string, roomId: string): TLAssetStore {
   return {
     async upload(_asset, file) {
       const id = uniqueId();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 80);
       const objectName = `${id}-${safeName}`;
-      const response = await fetch(`${syncOrigin}/api/uploads/${objectName}`, {
+      const response = await fetch(`${syncOrigin}/api/uploads/${roomId}/${objectName}`, {
         method: "POST",
         body: file,
       });
       if (!response.ok) {
         throw new Error("Failed to upload board asset.");
       }
-      return { src: `${syncOrigin}/api/uploads/${objectName}` };
+      return { src: `${syncOrigin}/api/uploads/${roomId}/${objectName}` };
     },
     resolve(asset) {
       return asset.props.src;

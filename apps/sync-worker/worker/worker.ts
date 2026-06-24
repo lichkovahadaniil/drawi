@@ -30,11 +30,23 @@ const router = AutoRouter<IRequest, [env: Env, ctx: ExecutionContext]>({
     return room.fetch(request.url, { headers, body: request.body });
   })
 
-  // assets can be uploaded to the bucket under /uploads:
-  .post("/api/uploads/:uploadId", handleAssetUpload)
+  // assets can be uploaded to the bucket under /uploads after sync access verification:
+  .post("/api/uploads/:roomId/:uploadId", async (request, env) => {
+    const roomId = request.params.roomId;
+    if (!roomId) return error(400, "Missing room id");
+    const claims = await verifySyncAccess(request, env, roomId);
+    if (!claims || claims.permission === "view") return error(403, "Forbidden");
+    return handleAssetUpload(request, env);
+  })
 
   // they can be retrieved from the bucket too:
-  .get("/api/uploads/:uploadId", handleAssetDownload)
+  .get("/api/uploads/:roomId/:uploadId", async (request, env, ctx) => {
+    const roomId = request.params.roomId;
+    if (!roomId) return error(400, "Missing room id");
+    const claims = await verifySyncAccess(request, env, roomId);
+    if (!claims) return error(403, "Forbidden");
+    return handleAssetDownload(request, env, ctx);
+  })
 
   // bookmarks need to extract metadata from pasted URLs:
   .get("/api/unfurl", handleUnfurlRequest)
