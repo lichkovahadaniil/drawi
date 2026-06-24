@@ -1,0 +1,49 @@
+{
+  "name": "@drawi/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx server/db/seed.ts"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.6.20",
+    "@livekit/components-react": "^2.9.17",
+    "@livekit/components-styles": "^1.1.6",
+    "@tldraw/sync": "^5.1.1",
+    "better-auth": "^1.6.20",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.1",
+    "livekit-client": "^2.20.0",
+    "livekit-server-sdk": "^2.14.0",
+    "lucide-react": "^0.561.0",
+    "next": "^16.2.9",
+    "postgres": "^3.4.7",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.4.0",
+    "tldraw": "^5.1.1",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@testing-library/react": "^16.3.1",
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "drizzle-kit": "^0.31.8",
+    "playwright": "^1.57.0",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.16"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "drawi-sync-worker",
+  "main": "worker/worker.ts",
+  "compatibility_date": "2026-06-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TLDRAW_DURABLE_OBJECT",
+        "class_name": "TldrawDurableObject",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["TldrawDurableObject"],
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "TLDRAW_BUCKET",
+      "bucket_name": "drawi-local-board-assets",
+      "preview_bucket_name": "drawi-local-board-assets-preview",
+    },
+  ],
+}

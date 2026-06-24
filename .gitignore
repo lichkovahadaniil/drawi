@@ -1,0 +1,22 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+.turbo/
+.cache/
+.wrangler/state/
+.wrangler/tmp/
+*.tsbuildinfo
+
+# Local upstream references. Keep them readable, but do not track or build them as drawi source.
+tldraw-main/
+livekit-master/

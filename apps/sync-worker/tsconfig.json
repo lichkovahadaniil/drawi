@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types"],
+    "lib": ["es2022", "webworker"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "exactOptionalPropertyTypes": false,
+    "noEmit": true
+  },
+  "include": ["worker/**/*.ts", "worker-configuration.d.ts"]
+}

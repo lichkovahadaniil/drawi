@@ -1,0 +1,4331 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<title>You are Codex acting as the principal product engineer, system architect, security engineer, and product designer for a new educational platform called drawi.</title>
+	</head>
+<body>
+<p>You are Codex acting as the principal product engineer, system architect, security engineer, and product designer for a new educational platform called drawi.</p>
+
+<p>Your task is to design and implement a production-oriented MVP of drawi. Do not treat this as a disposable demo. Build a coherent vertical slice with real persistence, authentication, authorization, live collaboration, audio/video communication, public creator-style profiles, private learning libraries, and a reusable design system.</p>
+
+<p>The name must always be written as drawi in lowercase.</p>
+
+<p>The name combines:</p>
+
+<p>• draw — visual thinking, explanation, diagrams, handwriting, and shared problem solving.</p>
+
+<p>• drive — progress, guidance, motivation, and movement through a learning path.</p>
+
+<p>Primary product statement:</p>
+
+<p>Think together. Learn visibly.</p>
+
+<p>Supporting statement:</p>
+
+<p>Draw ideas. Drive progress.</p>
+
+<p>The central product loop is:</p>
+
+<p>Explain → attempt → observe → correct → checkpoint → revisit.</p>
+
+<p>The product must not feel like a generic video-conferencing application with a whiteboard attached. The canvas is the main learning environment. Audio and video support the learning process but must not dominate the interface.</p>
+
+<p>Do not copy the visual identity, marketing language, branding, layout, or proprietary hosted application code of tldraw, LiveKit, YouTube, Claude, Figma, Miro, Linear, or any other product. Reuse third-party packages only according to their licenses. Preserve required notices and attribution.</p>
+
+<p>Before editing any files:</p>
+
+<p>1 Inspect the entire repository.</p>
+
+<p>2 Detect the existing framework, package manager, configuration, conventions, and uncommitted user changes.</p>
+
+<p>3 Never discard, reset, overwrite, or reformat unrelated user work.</p>
+
+<p>4 Create docs/implementation-plan.md.</p>
+
+<p>5 Create docs/architecture.md.</p>
+
+<p>6 Create docs/data-model.md.</p>
+
+<p>7 Create docs/design-system.md.</p>
+
+<p>8 Create docs/security.md.</p>
+
+<p>9 Create docs/licensing.md.</p>
+
+<p>10 Create architecture decision records in docs/adr/.</p>
+
+<p>11 Break the implementation into small vertical milestones.</p>
+
+<p>12 Explain assumptions in the documentation instead of blocking on minor decisions.</p>
+
+<p>13 Do not generate the entire application in one uncontrolled pass.</p>
+
+<p>14 After every meaningful milestone, run the relevant checks before proceeding.</p>
+
+<p>15 Do not claim that something works unless it has been implemented and verified.</p>
+
+<ol>
+	<li>Product concept</li>
+</ol>
+
+<p>drawi is a visual learning platform for tutors and students.</p>
+
+<p>It has three connected product layers:</p>
+
+<p>1 Live lessons</p>
+
+<p>◦ A tutor and one or more students communicate using audio and video.</p>
+
+<p>◦ Everyone works on a synchronized infinite canvas.</p>
+
+<p>◦ The tutor can explain, observe student work, control permissions, create checkpoints, and guide the viewport.</p>
+
+<p>2 Persistent boards</p>
+
+<p>◦ A lesson does not disappear after the call ends.</p>
+
+<p>◦ The board, checkpoints, metadata, and access rules remain available.</p>
+
+<p>◦ Students can revisit the material.</p>
+
+<p>◦ Tutors can convert selected material into reusable educational content.</p>
+
+<p>3 Profiles and libraries</p>
+
+<p>◦ Tutors can maintain public educational pages containing published boards and collections.</p>
+
+<p>◦ Students have private learning libraries containing lesson history, saved materials, personal copies, and private notes.</p>
+
+<p>◦ Every user may act as a tutor in one context and a student in another.</p>
+
+<p>The long-term product direction is not merely “YouTube for boards.” It is:</p>
+
+<p>A visual learning library where every lesson becomes structured, revisitable knowledge.</p>
+
+<ol start="2">
+	<li>Target users</li>
+</ol>
+
+<p>Initial users:</p>
+
+<p>• Independent tutors.</p>
+
+<p>• University tutors and teaching assistants.</p>
+
+<p>• Students receiving one-to-one instruction.</p>
+
+<p>• Small study groups.</p>
+
+<p>• Teachers creating visual learning materials.</p>
+
+<p>• Students building personal visual notes.</p>
+
+<p>• Tutors teaching mathematics, programming, physics, languages, economics, and diagram-heavy subjects.</p>
+
+<p>Initial live room size:</p>
+
+<p>• Optimize for 2–6 participants.</p>
+
+<p>• Do not architect the system in a way that makes larger rooms impossible.</p>
+
+<p>• Do not build webinar functionality in the MVP.</p>
+
+<ol start="3">
+	<li>Required technology stack</li>
+</ol>
+
+<p>Use the following stack unless the existing repository already contains a compatible alternative. Do not replace a listed technology without documenting the reason in an ADR.</p>
+
+<p>Resolve and install mutually compatible, stable, security-patched versions at implementation time. Pin exact resolved versions in the lockfile. Do not blindly use outdated versions from memory.</p>
+
+<p>3.1 Repository and package management</p>
+
+<p>Use:</p>
+
+<p>• TypeScript monorepo.</p>
+
+<p>• pnpm workspaces.</p>
+
+<p>• Turborepo for task orchestration and caching.</p>
+
+<p>• Node.js current active LTS release.</p>
+
+<p>• Strict TypeScript configuration.</p>
+
+<p>• Shared ESLint flat configuration.</p>
+
+<p>• Prettier for deterministic formatting.</p>
+
+<p>• GitHub Actions for continuous integration.</p>
+
+<p>Repository structure:</p>
+
+<p>drawi/</p>
+
+<p>├── apps/</p>
+
+<p>│ ├── web/</p>
+
+<p>│ └── sync-worker/</p>
+
+<p>├── packages/</p>
+
+<p>│ ├── auth/</p>
+
+<p>│ ├── contracts/</p>
+
+<p>│ ├── database/</p>
+
+<p>│ ├── design-system/</p>
+
+<p>│ ├── email/</p>
+
+<p>│ ├── observability/</p>
+
+<p>│ ├── shared/</p>
+
+<p>│ ├── test-utils/</p>
+
+<p>│ ├── eslint-config/</p>
+
+<p>│ └── typescript-config/</p>
+
+<p>├── docs/</p>
+
+<p>│ ├── adr/</p>
+
+<p>│ ├── architecture.md</p>
+
+<p>│ ├── data-model.md</p>
+
+<p>│ ├── design-system.md</p>
+
+<p>│ ├── implementation-plan.md</p>
+
+<p>│ ├── licensing.md</p>
+
+<p>│ ├── operations.md</p>
+
+<p>│ └── security.md</p>
+
+<p>├── scripts/</p>
+
+<p>├── docker-compose.yml</p>
+
+<p>├── .env.example</p>
+
+<p>├── AGENTS.md</p>
+
+<p>├── README.md</p>
+
+<p>├── THIRD<em>PARTY</em>NOTICES.md</p>
+
+<p>├── package.json</p>
+
+<p>├── pnpm-workspace.yaml</p>
+
+<p>└── turbo.json</p>
+
+<p>Do not create packages only for aesthetic architectural symmetry. Every package must have a clear responsibility.</p>
+
+<p>3.2 Web application</p>
+
+<p>Use:</p>
+
+<p>• Latest stable Next.js with App Router.</p>
+
+<p>• React with the stable version supported by the selected Next.js release.</p>
+
+<p>• React Server Components for server-rendered application pages.</p>
+
+<p>• Client Components only where browser state or interactive APIs require them.</p>
+
+<p>• TypeScript with strict: true.</p>
+
+<p>• Tailwind CSS v4 or the current stable major supported by the selected environment.</p>
+
+<p>• CSS variables as the source of truth for design tokens.</p>
+
+<p>• Radix UI primitives for accessible low-level behavior.</p>
+
+<p>• Class Variance Authority for typed component variants.</p>
+
+<p>• clsx and tailwind-merge for controlled class composition.</p>
+
+<p>• Motion for restrained interface animation.</p>
+
+<p>• Lucide icons where a custom icon is not required.</p>
+
+<p>• next/font for locally optimized fonts.</p>
+
+<p>• Zod for runtime validation.</p>
+
+<p>• React Hook Form for complex client forms.</p>
+
+<p>• Zustand only for ephemeral local interface state.</p>
+
+<p>Do not use Zustand for:</p>
+
+<p>• Server data.</p>
+
+<p>• Authentication state.</p>
+
+<p>• Board document state.</p>
+
+<p>• LiveKit room state.</p>
+
+<p>• Data that belongs in URL parameters.</p>
+
+<p>• Data that belongs in the database.</p>
+
+<p>Use Server Components and URL search parameters for library search, sorting, and filters where practical.</p>
+
+<p>Use TanStack Query only when a client-side cached mutation flow is clearly beneficial, such as optimistic save, favorite, or collection changes. Do not add it merely because it is popular.</p>
+
+<p>3.3 Authentication</p>
+
+<p>Use:</p>
+
+<p>• Better Auth.</p>
+
+<p>• Drizzle adapter.</p>
+
+<p>• Database-backed sessions.</p>
+
+<p>• Secure HTTP-only cookies.</p>
+
+<p>• Email and password authentication for the first complete flow.</p>
+
+<p>• Email verification.</p>
+
+<p>• Password reset.</p>
+
+<p>• Optional Google OAuth only after the primary authentication flow works.</p>
+
+<p>• Resend and React Email for transactional email.</p>
+
+<p>Authentication requirements:</p>
+
+<p>• Never expose authentication secrets to the browser.</p>
+
+<p>• Rotate session tokens according to the authentication library’s supported approach.</p>
+
+<p>• Revoke sessions when a password is changed.</p>
+
+<p>• Provide a page showing active sessions where supported.</p>
+
+<p>• Rate-limit sign-in, sign-up, reset, and verification endpoints.</p>
+
+<p>• Validate redirect URLs.</p>
+
+<p>• Do not implement custom cryptography.</p>
+
+<p>• Do not hand-roll password hashing.</p>
+
+<p>• Do not use local storage for authentication tokens.</p>
+
+<p>• Do not assume middleware authorization is sufficient.</p>
+
+<p>• Perform authorization again inside server-side actions and services.</p>
+
+<p>Support authenticated users first.</p>
+
+<p>Guest lesson access may be implemented behind an explicit feature flag, but guest users must not silently acquire persistent library ownership. If guest access is implemented, document a secure account-claiming design and do not merge guest history into an account using only a guessable identifier.</p>
+
+<p>3.4 Database</p>
+
+<p>Use:</p>
+
+<p>• PostgreSQL.</p>
+
+<p>• Drizzle ORM.</p>
+
+<p>• Drizzle Kit for generated SQL migrations.</p>
+
+<p>• A local PostgreSQL container for development.</p>
+
+<p>• Neon PostgreSQL or another standard managed PostgreSQL provider for hosted environments.</p>
+
+<p>• PostgreSQL timestamps with timezone.</p>
+
+<p>• Database transactions for multi-record ownership and access operations.</p>
+
+<p>• Database constraints, not only application validation.</p>
+
+<p>• Cursor-based pagination for board and library listings.</p>
+
+<p>Do not use an in-memory database as the main implementation.</p>
+
+<p>Do not use database push operations as the production migration strategy. Generate versioned SQL migrations, review them, and apply them explicitly.</p>
+
+<p>Use PostgreSQL for:</p>
+
+<p>• Users and profiles.</p>
+
+<p>• Authentication sessions.</p>
+
+<p>• Board metadata.</p>
+
+<p>• Ownership.</p>
+
+<p>• Access records.</p>
+
+<p>• Lesson metadata.</p>
+
+<p>• Library relationships.</p>
+
+<p>• Collections.</p>
+
+<p>• Checkpoint metadata.</p>
+
+<p>• Invitations.</p>
+
+<p>• Audit events.</p>
+
+<p>• Search metadata.</p>
+
+<p>Do not store the continuously changing full tldraw document in a normal PostgreSQL row after every drawing operation.</p>
+
+<p>3.5 Collaborative canvas</p>
+
+<p>Use:</p>
+
+<p>• tldraw SDK.</p>
+
+<p>• @tldraw/sync.</p>
+
+<p>• A self-hosted synchronization backend for production.</p>
+
+<p>• Cloudflare Workers.</p>
+
+<p>• Cloudflare Durable Objects.</p>
+
+<p>• SQLite-backed Durable Objects where supported by the current Cloudflare environment.</p>
+
+<p>• Cloudflare R2 for board assets, checkpoint payloads, generated thumbnails, avatars, and exported material files.</p>
+
+<p>Use the official tldraw multiplayer architecture as a reference, but adapt it to drawi’s authorization and persistence requirements.</p>
+
+<p>Important constraints:</p>
+
+<p>• The public tldraw demo synchronization service may only be used temporarily during local prototyping.</p>
+
+<p>• It must never be the production persistence layer.</p>
+
+<p>• Development mode must visibly indicate when temporary or non-private infrastructure is being used.</p>
+
+<p>• Production deployment requires a valid tldraw production license key.</p>
+
+<p>• Document the licensing requirement in docs/licensing.md.</p>
+
+<p>• Never imply that the source repository can be copied without licensing restrictions.</p>
+
+<p>• Preserve third-party notices.</p>
+
+<p>Create a provider boundary:</p>
+
+<p>export interface BoardSyncProvider </p>
+
+<p> connect(input: </p>
+
+<p>boardId: string;</p>
+
+<p>userId: string;</p>
+
+<p>accessToken: string;</p>
+
+<p> }): BoardConnection;</p>
+
+<p>}</p>
+
+<p>The web interface must not depend directly on temporary demo infrastructure.</p>
+
+<p>3.6 Audio and video</p>
+
+<p>Use:</p>
+
+<p>• LiveKit.</p>
+
+<p>• livekit-client.</p>
+
+<p>• @livekit/components-react.</p>
+
+<p>• LiveKit server SDK.</p>
+
+<p>• LiveKit Cloud for the first hosted MVP.</p>
+
+<p>• A documented self-hosted path.</p>
+
+<p>• Server-generated, short-lived access tokens.</p>
+
+<p>• LiveKit webhooks with signature verification.</p>
+
+<p>• Native LiveKit screen sharing.</p>
+
+<p>• LiveKit connection quality information.</p>
+
+<p>LiveKit responsibilities:</p>
+
+<p>• Audio.</p>
+
+<p>• Camera video.</p>
+
+<p>• Screen sharing.</p>
+
+<p>• Active speaker state.</p>
+
+<p>• Media participant presence.</p>
+
+<p>• Media connection quality.</p>
+
+<p>• Low-frequency ephemeral lesson-control notifications when appropriate.</p>
+
+<p>LiveKit must not be used as the canonical whiteboard synchronization transport.</p>
+
+<p>Do not send continuous canvas shape changes, freehand strokes, document snapshots, or board persistence data through LiveKit data packets.</p>
+
+<p>LiveKit data packets may be used only for low-frequency ephemeral signals such as:</p>
+
+<p>• “Tutor changed student editing permission.”</p>
+
+<p>• “Tutor requested viewport following.”</p>
+
+<p>• “Lesson is ending.”</p>
+
+<p>• “A new checkpoint is available.”</p>
+
+<p>The canonical permission state must still be stored and enforced on the server.</p>
+
+<p>3.7 Object storage</p>
+
+<p>Use Cloudflare R2 through an abstraction compatible with S3-style object storage.</p>
+
+<p>Store:</p>
+
+<p>• User avatars.</p>
+
+<p>• Board image assets.</p>
+
+<p>• Uploaded PDFs or images added to boards.</p>
+
+<p>• Board thumbnail images.</p>
+
+<p>• Checkpoint snapshot payloads.</p>
+
+<p>• Board exports.</p>
+
+<p>• Generated social-preview images where needed.</p>
+
+<p>Requirements:</p>
+
+<p>• Private objects must not be exposed using permanent public URLs.</p>
+
+<p>• Use signed or authorized delivery.</p>
+
+<p>• Verify MIME type, declared extension, actual file signature, and file size.</p>
+
+<p>• Generate collision-resistant object keys.</p>
+
+<p>• Separate object prefixes by environment and entity.</p>
+
+<p>• Do not trust client-provided object paths.</p>
+
+<p>• Store object metadata in PostgreSQL.</p>
+
+<p>• Do not let thumbnail generation failure block saving a board.</p>
+
+<p>• Add cleanup logic for abandoned uploads.</p>
+
+<p>• Add limits for image dimensions and file size.</p>
+
+<p>• Do not support arbitrary executable uploads.</p>
+
+<p>Example object key structure:</p>
+
+<p>environment/users/userId/avatars/assetId</p>
+
+<p>environment/boards/boardId/assets/assetId</p>
+
+<p>environment/boards/boardId/thumbnails/version.webp</p>
+
+<p>environment/boards/boardId/checkpoints/checkpointId.json.gz</p>
+
+<p>environment/boards/boardId/exports/exportId.pdf</p>
+
+<p>3.8 Validation and contracts</p>
+
+<p>Use Zod schemas in packages/contracts.</p>
+
+<p>Define schemas for:</p>
+
+<p>• Environment variables.</p>
+
+<p>• Profile mutations.</p>
+
+<p>• Username changes.</p>
+
+<p>• Board creation.</p>
+
+<p>• Board metadata updates.</p>
+
+<p>• Board permission changes.</p>
+
+<p>• Collection creation.</p>
+
+<p>• Collection ordering.</p>
+
+<p>• Lesson creation.</p>
+
+<p>• Lesson joining.</p>
+
+<p>• LiveKit token requests.</p>
+
+<p>• Board synchronization token requests.</p>
+
+<p>• Checkpoint creation and restoration.</p>
+
+<p>• Invitations.</p>
+
+<p>• Visibility changes.</p>
+
+<p>• Search parameters.</p>
+
+<p>• Cursor pagination.</p>
+
+<p>• Webhook payload boundaries.</p>
+
+<p>Do not duplicate inconsistent validation logic across route handlers and components.</p>
+
+<p>Never trust TypeScript types as runtime validation.</p>
+
+<p>3.9 Testing</p>
+
+<p>Use:</p>
+
+<p>• Vitest for unit tests.</p>
+
+<p>• React Testing Library for component behavior.</p>
+
+<p>• Playwright for end-to-end tests.</p>
+
+<p>• axe-core or Playwright accessibility integration for automated accessibility checks.</p>
+
+<p>• MSW or narrow internal adapters for deterministic external-service tests.</p>
+
+<p>• Testcontainers or a dedicated test PostgreSQL database for integration tests when practical.</p>
+
+<p>Do not mock the application’s own permission service in authorization integration tests.</p>
+
+<p>External LiveKit and object-storage behavior may use narrow deterministic test adapters, but retain at least one documented manual test path against real services.</p>
+
+<p>3.10 Observability</p>
+
+<p>Use:</p>
+
+<p>• Sentry for exception reporting and performance monitoring.</p>
+
+<p>• Structured server logs using Pino or a similarly lightweight structured logger.</p>
+
+<p>• Request correlation IDs.</p>
+
+<p>• Health endpoints.</p>
+
+<p>• Redaction of secrets and tokens.</p>
+
+<p>• Basic application metrics where supported.</p>
+
+<p>• Clear environment tagging.</p>
+
+<p>Do not send board contents, private notes, passwords, tokens, or raw lesson media into observability systems.</p>
+
+<p>Session replay must remain disabled by default on private lesson and board pages unless privacy implications are explicitly reviewed.</p>
+
+<p>3.11 Deployment</p>
+
+<p>Recommended hosted topology:</p>
+
+<p>Browser</p>
+
+<p>├── Next.js web application on Vercel</p>
+
+<p>├── tldraw sync worker on Cloudflare Workers</p>
+
+<p>├── one Durable Object per active board room</p>
+
+<p>├── Cloudflare R2 for board assets and snapshots</p>
+
+<p>├── PostgreSQL on Neon</p>
+
+<p>├── LiveKit Cloud for WebRTC media</p>
+
+<p>├── Resend for transactional email</p>
+
+<p>└── Sentry for error monitoring</p>
+
+<p>Keep infrastructure adapters explicit enough that these providers can later be replaced.</p>
+
+<ol start="4">
+	<li>Architecture principles</li>
+</ol>
+
+<p>Use one application-level identity model, but keep real-time subsystems separate.</p>
+
+<p>drawi lesson</p>
+
+<p>├── PostgreSQL application state</p>
+
+<p>│ ├── users</p>
+
+<p>│ ├── profiles</p>
+
+<p>│ ├── lessons</p>
+
+<p>│ ├── roles</p>
+
+<p>│ ├── board metadata</p>
+
+<p>│ ├── permissions</p>
+
+<p>│ ├── libraries</p>
+
+<p>│ ├── collections</p>
+
+<p>│ └── checkpoint metadata</p>
+
+<p>│</p>
+
+<p>├── tldraw synchronization</p>
+
+<p>│ ├── canvas records</p>
+
+<p>│ ├── shapes</p>
+
+<p>│ ├── text</p>
+
+<p>│ ├── selections</p>
+
+<p>│ ├── cursors</p>
+
+<p>│ ├── board presence</p>
+
+<p>│ └── viewport presence</p>
+
+<p>│</p>
+
+<p>├── R2 object storage</p>
+
+<p>│ ├── board assets</p>
+
+<p>│ ├── thumbnails</p>
+
+<p>│ ├── checkpoint snapshots</p>
+
+<p>│ └── exports</p>
+
+<p>│</p>
+
+<p>└── LiveKit room</p>
+
+<p>├── audio</p>
+
+<p>├── video</p>
+
+<p>├── screen sharing</p>
+
+<p>├── active speaker</p>
+
+<p>└── connection quality</p>
+
+<p>Canonical identifiers:</p>
+
+<p>type UserId = string;</p>
+
+<p>type BoardId = string;</p>
+
+<p>type LessonId = string;</p>
+
+<p>type CollectionId = string;</p>
+
+<p>type CheckpointId = string;</p>
+
+<p>type LiveKitRoomName = string;</p>
+
+<p>type BoardRoomId = string;</p>
+
+<p>The same authenticated application user must map deterministically to:</p>
+
+<p>• Application user ID.</p>
+
+<p>• tldraw participant identity.</p>
+
+<p>• LiveKit participant identity.</p>
+
+<p>• Lesson membership.</p>
+
+<p>Never use the display name as the canonical identity.</p>
+
+<p>Use database-generated UUIDs or another collision-resistant stable identifier for internal entities.</p>
+
+<p>Use separate human-readable invitation codes and public slugs.</p>
+
+<ol start="5">
+	<li>User model</li>
+</ol>
+
+<p>A user may be a tutor in one lesson and a student in another.</p>
+
+<p>Do not implement this:</p>
+
+<p>type AccountType = &quot;tutor&quot; | &quot;student&quot;;</p>
+
+<p>Use capabilities and context-specific roles:</p>
+
+<p>type UserCapabilities = </p>
+
+<p> canCreateBoards: boolean;</p>
+
+<p> canTeach: boolean;</p>
+
+<p> canPublish: boolean;</p>
+
+<p>};</p>
+
+<p>type LessonRole = &quot;tutor&quot; | &quot;student&quot;;</p>
+
+<p>type BoardPermission =</p>
+
+<p> | &quot;owner&quot;</p>
+
+<p> | &quot;manage&quot;</p>
+
+<p> | &quot;edit&quot;</p>
+
+<p> | &quot;view&quot;;</p>
+
+<p>A user’s public profile is independent of their role in a specific lesson.</p>
+
+<p>A student can publish personal work later if they explicitly enable publishing.</p>
+
+<p>A tutor can also save materials from another tutor as a student.</p>
+
+<ol start="6">
+	<li>Required database model</li>
+</ol>
+
+<p>Implement the following conceptual model using normalized PostgreSQL tables and Drizzle schemas.</p>
+
+<p>Use snake<em>case in the database and idiomatic TypeScript names in application code.
+</em></p>
+
+<p>6.1 Profiles</p>
+
+<p>type Profile = </p>
+
+<p> userId: string;</p>
+
+<p> username: string;</p>
+
+<p> displayName: string;</p>
+
+<p> avatarAssetId: string | null;</p>
+
+<p> bio: string | null;</p>
+
+<p> headline: string | null;</p>
+
+<p> subjects: string<a href=""></a>;</p>
+
+<p> profileVisibility: &quot;private&quot; | &quot;public&quot;;</p>
+
+<p> canTeach: boolean;</p>
+
+<p> canPublish: boolean;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p>};</p>
+
+<p>Requirements:</p>
+
+<p>• Username must be case-insensitively unique.</p>
+
+<p>• Store a normalized username.</p>
+
+<p>• Reserve application routes and offensive or misleading system names.</p>
+
+<p>• Validate username length and allowed characters.</p>
+
+<p>• Username changes must create redirects from recent historical usernames or be explicitly documented as unsupported.</p>
+
+<p>• Students must receive private profiles by default.</p>
+
+<p>• Tutor profiles become public only after explicit action.</p>
+
+<p>• Profile biography must have a reasonable maximum length.</p>
+
+<p>6.2 Boards</p>
+
+<p>type Board = </p>
+
+<p> id: string;</p>
+
+<p> ownerId: string;</p>
+
+<p> title: string;</p>
+
+<p> description: string | null;</p>
+
+<p> kind: &quot;personal&quot; | &quot;lesson&quot; | &quot;material&quot; | &quot;template&quot;;</p>
+
+<p> visibility: &quot;private&quot; | &quot;shared&quot; | &quot;unlisted&quot; | &quot;public&quot;;</p>
+
+<p> status: &quot;active&quot; | &quot;archived&quot; | &quot;deleted&quot;;</p>
+
+<p> sourceBoardId: string | null;</p>
+
+<p> sourceLessonId: string | null;</p>
+
+<p> thumbnailAssetId: string | null;</p>
+
+<p> publishedAt: Date | null;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p> deletedAt: Date | null;</p>
+
+<p>};</p>
+
+<p>Important ownership rules:</p>
+
+<p>• Every board has exactly one canonical owner.</p>
+
+<p>• Viewing a board never changes ownership.</p>
+
+<p>• Saving a board never changes ownership.</p>
+
+<p>• A student joining a lesson does not become a board owner.</p>
+
+<p>• Making a copy creates a new board owned by the copying user.</p>
+
+<p>• Copies must preserve provenance using sourceBoardId.</p>
+
+<p>• A lesson created from a tutor template must use a fork or lesson instance.</p>
+
+<p>• Never allow students to modify the tutor’s reusable template directly.</p>
+
+<p>• Publishing a lesson board must be explicit.</p>
+
+<p>• Ending a lesson must not automatically make the board public.</p>
+
+<p>6.3 Board access</p>
+
+<p>type BoardAccess = </p>
+
+<p> id: string;</p>
+
+<p> boardId: string;</p>
+
+<p> userId: string;</p>
+
+<p> permission: &quot;manage&quot; | &quot;edit&quot; | &quot;view&quot;;</p>
+
+<p> source: &quot;manual&quot; | &quot;lesson&quot; | &quot;collection&quot; | &quot;invitation&quot;;</p>
+
+<p> grantedByUserId: string;</p>
+
+<p> expiresAt: Date | null;</p>
+
+<p> revokedAt: Date | null;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p>};</p>
+
+<p>Database constraints:</p>
+
+<p>• One active direct access row per board and user.</p>
+
+<p>• The board owner must not require a separate access row.</p>
+
+<p>• Revocation must be auditable.</p>
+
+<p>• Permission upgrades and downgrades must be transactionally safe.</p>
+
+<p>• Expired or revoked permissions must never authorize a board synchronization token.</p>
+
+<p>6.4 Library items</p>
+
+<p>type LibraryItem = </p>
+
+<p> id: string;</p>
+
+<p> userId: string;</p>
+
+<p> boardId: string;</p>
+
+<p> relationship:</p>
+
+<p>| &quot;owned&quot;</p>
+
+<p>| &quot;saved&quot;</p>
+
+<p>| &quot;shared<em>with</em>me&quot;</p>
+
+<p>| &quot;viewed<em>in</em>lesson&quot;</p>
+
+<p>| &quot;copied&quot;;</p>
+
+<p> isFavorite: boolean;</p>
+
+<p> savedAt: Date;</p>
+
+<p> lastViewedAt: Date | null;</p>
+
+<p> lastCheckpointId: string | null;</p>
+
+<p> archivedAt: Date | null;</p>
+
+<p>};</p>
+
+<p>Requirements:</p>
+
+<p>• One meaningful active relationship record per user, board, and relationship.</p>
+
+<p>• Saving a board creates a library relationship, not a duplicate board.</p>
+
+<p>• Unsave removes or archives only the saved relationship.</p>
+
+<p>• Unsave must not remove lesson history.</p>
+
+<p>• Removing a board from the library must not delete the canonical board.</p>
+
+<p>• Opening a board should update lastViewedAt asynchronously.</p>
+
+<p>• A user may retain a lesson-history record after future board access is revoked, but the record must clearly indicate that the board is no longer accessible.</p>
+
+<p>6.5 Collections</p>
+
+<p>type Collection = </p>
+
+<p> id: string;</p>
+
+<p> ownerId: string;</p>
+
+<p> title: string;</p>
+
+<p> description: string | null;</p>
+
+<p> visibility: &quot;private&quot; | &quot;unlisted&quot; | &quot;public&quot;;</p>
+
+<p> coverBoardId: string | null;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p> deletedAt: Date | null;</p>
+
+<p>};</p>
+
+<p>type CollectionBoard = </p>
+
+<p> collectionId: string;</p>
+
+<p> boardId: string;</p>
+
+<p> position: number;</p>
+
+<p> addedAt: Date;</p>
+
+<p>};</p>
+
+<p>Requirements:</p>
+
+<p>• The same board may belong to multiple collections.</p>
+
+<p>• Collection ordering must be deterministic.</p>
+
+<p>• Reordering must use a transaction.</p>
+
+<p>• Public collections may contain only boards that are visible to the viewer.</p>
+
+<p>• A public collection must not accidentally expose a private board.</p>
+
+<p>• Removing a board from a collection must not delete the board.</p>
+
+<p>• Support private student folders and public tutor learning paths using the same collection model.</p>
+
+<p>6.6 Lessons</p>
+
+<p>type Lesson = </p>
+
+<p> id: string;</p>
+
+<p> hostUserId: string;</p>
+
+<p> boardId: string;</p>
+
+<p> title: string;</p>
+
+<p> status: &quot;draft&quot; | &quot;scheduled&quot; | &quot;live&quot; | &quot;ended&quot; | &quot;cancelled&quot;;</p>
+
+<p> inviteCode: string;</p>
+
+<p> liveKitRoomName: string;</p>
+
+<p> startedAt: Date | null;</p>
+
+<p> endedAt: Date | null;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p>};</p>
+
+<p>type LessonMembership = </p>
+
+<p> id: string;</p>
+
+<p> lessonId: string;</p>
+
+<p> userId: string;</p>
+
+<p> role: &quot;tutor&quot; | &quot;student&quot;;</p>
+
+<p> canEditBoard: boolean;</p>
+
+<p> joinedAt: Date | null;</p>
+
+<p> leftAt: Date | null;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p>};</p>
+
+<p>Requirements:</p>
+
+<p>• A lesson must have at least one tutor.</p>
+
+<p>• A lesson has one canonical lesson board.</p>
+
+<p>• Additional tutors may be deferred, but the schema should not make them impossible.</p>
+
+<p>• Membership is authoritative for media token issuance.</p>
+
+<p>• Lesson status is authoritative for joining.</p>
+
+<p>• Invite codes must be unpredictable and revocable.</p>
+
+<p>• A tutor can rotate an invitation code.</p>
+
+<p>• A lesson can be joined only by authorized users or users with a valid invitation.</p>
+
+<p>• Ending a lesson must be idempotent.</p>
+
+<p>6.7 Checkpoints</p>
+
+<p>type BoardCheckpoint = </p>
+
+<p> id: string;</p>
+
+<p> boardId: string;</p>
+
+<p> lessonId: string | null;</p>
+
+<p> createdByUserId: string;</p>
+
+<p> name: string;</p>
+
+<p> description: string | null;</p>
+
+<p> snapshotObjectKey: string;</p>
+
+<p> snapshotSchemaVersion: number;</p>
+
+<p> snapshotChecksum: string;</p>
+
+<p> viewportJson: unknown | null;</p>
+
+<p> isAutomatic: boolean;</p>
+
+<p> createdAt: Date;</p>
+
+<p>};</p>
+
+<p>Checkpoint requirements:</p>
+
+<p>• Creating a checkpoint must not block ongoing drawing longer than necessary.</p>
+
+<p>• The payload must be versioned.</p>
+
+<p>• Store large snapshot payloads in R2, not PostgreSQL.</p>
+
+<p>• Verify the checksum before restoration.</p>
+
+<p>• Restoring a checkpoint must require manage permission.</p>
+
+<p>• Before restoration, create an automatic pre-restore checkpoint.</p>
+
+<p>• Restoration must be transactionally coordinated as far as possible.</p>
+
+<p>• Never silently destroy the current board state.</p>
+
+<p>• Show clear progress and failure states.</p>
+
+<p>• Failed restoration must not leave the board in an ambiguous state.</p>
+
+<p>• Checkpoint names require length limits and sanitization.</p>
+
+<p>6.8 Private student overlays</p>
+
+<p>type StudentBoardOverlay = </p>
+
+<p> id: string;</p>
+
+<p> boardId: string;</p>
+
+<p> userId: string;</p>
+
+<p> storageObjectKey: string;</p>
+
+<p> schemaVersion: number;</p>
+
+<p> createdAt: Date;</p>
+
+<p> updatedAt: Date;</p>
+
+<p>};</p>
+
+<p>Student notes must not modify the tutor’s canonical board.</p>
+
+<p>Support one of these private-note implementations:</p>
+
+<p>• A private side-note document associated with the board.</p>
+
+<p>• A separate private tldraw overlay document.</p>
+
+<p>• A personal copied board.</p>
+
+<p>For the MVP, choose the simplest secure approach and document it in an ADR.</p>
+
+<p>The tutor must not see private student notes unless the student explicitly shares them.</p>
+
+<p>Private overlays must never appear in:</p>
+
+<p>• Tutor board exports.</p>
+
+<p>• Public board thumbnails.</p>
+
+<p>• Tutor checkpoints.</p>
+
+<p>• Public profile pages.</p>
+
+<p>• Live shared board synchronization.</p>
+
+<p>• Search results belonging to another user.</p>
+
+<p>6.9 Invitations and audit events</p>
+
+<p>Add explicit tables for:</p>
+
+<p>• Lesson invitations.</p>
+
+<p>• Board invitations.</p>
+
+<p>• Important authorization and publishing events.</p>
+
+<p>Audit events should cover:</p>
+
+<p>• Board visibility changed.</p>
+
+<p>• Board access granted.</p>
+
+<p>• Board access revoked.</p>
+
+<p>• Lesson ended.</p>
+
+<p>• Checkpoint restored.</p>
+
+<p>• Public content published.</p>
+
+<p>• Public content unpublished.</p>
+
+<p>• Invitation rotated.</p>
+
+<p>Do not log private board contents.</p>
+
+<ol start="7">
+	<li>Authorization architecture</li>
+</ol>
+
+<p>Authorization is a core product requirement.</p>
+
+<p>Do not rely on:</p>
+
+<p>• Hidden buttons.</p>
+
+<p>• Disabled controls.</p>
+
+<p>• Client-side route guards.</p>
+
+<p>• Middleware alone.</p>
+
+<p>• A role supplied by the browser.</p>
+
+<p>• A user ID supplied by a form.</p>
+
+<p>Implement central permission functions:</p>
+
+<p>canViewBoard(actor, board)</p>
+
+<p>canEditBoard(actor, board)</p>
+
+<p>canManageBoard(actor, board)</p>
+
+<p>canPublishBoard(actor, board)</p>
+
+<p>canCreateCheckpoint(actor, board, lesson)</p>
+
+<p>canRestoreCheckpoint(actor, board, lesson)</p>
+
+<p>canJoinLesson(actor, lesson, invitation)</p>
+
+<p>canIssueMediaToken(actor, lesson)</p>
+
+<p>canIssueBoardToken(actor, board)</p>
+
+<p>canViewProfile(actor, profile)</p>
+
+<p>canManageCollection(actor, collection)</p>
+
+<p>Place these in a server-only authorization module.</p>
+
+<p>Test them using table-driven tests.</p>
+
+<p>Every mutation service must:</p>
+
+<p>1 Load the authenticated user from the server session.</p>
+
+<p>2 Load the relevant database entity.</p>
+
+<p>3 Run the central authorization function.</p>
+
+<p>4 Validate the input.</p>
+
+<p>5 Execute the mutation inside a transaction when needed.</p>
+
+<p>6 Emit an audit event for sensitive actions.</p>
+
+<p>7 Return a typed result.</p>
+
+<p>8 Never trust a permission value sent by the client.</p>
+
+<ol start="8">
+	<li>Board synchronization security</li>
+</ol>
+
+<p>The Next.js application and sync worker are separate trust boundaries.</p>
+
+<p>Implement short-lived board access tokens.</p>
+
+<p>Recommended token claims:</p>
+
+<p>type BoardAccessClaims = </p>
+
+<p> sub: string;</p>
+
+<p> boardId: string;</p>
+
+<p> permission: &quot;manage&quot; | &quot;edit&quot; | &quot;view&quot;;</p>
+
+<p> lessonId?: string;</p>
+
+<p> sessionId: string;</p>
+
+<p> jti: string;</p>
+
+<p> iat: number;</p>
+
+<p> exp: number;</p>
+
+<p> issuer: &quot;drawi-web&quot;;</p>
+
+<p> audience: &quot;drawi-sync&quot;;</p>
+
+<p>};</p>
+
+<p>Prefer asymmetric signing:</p>
+
+<p>• The web application signs with a private key.</p>
+
+<p>• The sync worker verifies with a public key.</p>
+
+<p>• The sync worker must not need the web application’s private key.</p>
+
+<p>• Keys must be environment-specific.</p>
+
+<p>• Tokens must expire quickly.</p>
+
+<p>• Never put tokens into logs or URLs.</p>
+
+<p>The sync worker must:</p>
+
+<p>• Verify signature.</p>
+
+<p>• Verify issuer.</p>
+
+<p>• Verify audience.</p>
+
+<p>• Verify expiration.</p>
+
+<p>• Verify board ID.</p>
+
+<p>• Verify required permission.</p>
+
+<p>• Reject malformed claims.</p>
+
+<p>• Prevent view-only users from mutating the board.</p>
+
+<p>• Close or downgrade connections after permission revocation when feasible.</p>
+
+<p>• Reject cross-board token reuse.</p>
+
+<p>• Rate-limit repeated invalid connection attempts.</p>
+
+<p>• Use structured redacted logs.</p>
+
+<p>Dynamic lesson permission updates:</p>
+
+<p>1 Tutor changes a student’s edit permission through the web application.</p>
+
+<p>2 The server validates that the tutor can manage the lesson.</p>
+
+<p>3 PostgreSQL is updated.</p>
+
+<p>4 The server sends an authenticated internal permission update to the board Durable Object.</p>
+
+<p>5 The Durable Object updates its enforced permission state.</p>
+
+<p>6 The student interface receives a low-frequency control notification.</p>
+
+<p>7 The student toolbar changes immediately.</p>
+
+<p>8 The synchronization backend remains authoritative even if the student modifies the browser.</p>
+
+<p>Do not implement student-edit disabling only by hiding tools.</p>
+
+<ol start="9">
+	<li>LiveKit integration</li>
+</ol>
+
+<p>Create a server-only LiveKit token service.</p>
+
+<p>Token endpoint requirements:</p>
+
+<p>• Require an authenticated user.</p>
+
+<p>• Validate lesson membership or valid lesson invitation flow.</p>
+
+<p>• Validate lesson status.</p>
+
+<p>• Derive participant identity from the authenticated user.</p>
+
+<p>• Derive the LiveKit room name from the lesson record.</p>
+
+<p>• Never accept an arbitrary room name from the client.</p>
+
+<p>• Assign only the required grants.</p>
+
+<p>• Use short token expiration.</p>
+
+<p>• Rate-limit token creation.</p>
+
+<p>• Do not expose the LiveKit API secret.</p>
+
+<p>• Do not log the generated JWT.</p>
+
+<p>Participant metadata may include:</p>
+
+<p>• Application user ID.</p>
+
+<p>• Display name.</p>
+
+<p>• Lesson role.</p>
+
+<p>• Avatar reference.</p>
+
+<p>Do not place private profile data in participant metadata.</p>
+
+<p>Tutor controls:</p>
+
+<p>• Mute own microphone.</p>
+
+<p>• Disable own camera.</p>
+
+<p>• Share screen.</p>
+
+<p>• Remove a participant through an authorized server-side operation.</p>
+
+<p>• End lesson.</p>
+
+<p>• Change student board-edit permission.</p>
+
+<p>• Request viewport following.</p>
+
+<p>Student controls:</p>
+
+<p>• Mute own microphone.</p>
+
+<p>• Disable own camera.</p>
+
+<p>• Share screen only when lesson policy permits it.</p>
+
+<p>• Leave lesson.</p>
+
+<p>• Follow or stop following the tutor.</p>
+
+<p>Media states:</p>
+
+<p>type MediaConnectionState =</p>
+
+<p> | &quot;idle&quot;</p>
+
+<p> | &quot;requesting<em>permissions&quot;
+</em></p>
+
+<p> | &quot;connecting&quot;</p>
+
+<p> | &quot;connected&quot;</p>
+
+<p> | &quot;reconnecting&quot;</p>
+
+<p> | &quot;disconnected&quot;</p>
+
+<p> | &quot;permission<em>denied&quot;
+</em></p>
+
+<p> | &quot;failed&quot;;</p>
+
+<p>Board and media connection states must be independent.</p>
+
+<p>The board must remain usable when:</p>
+
+<p>• Camera permission is denied.</p>
+
+<p>• Microphone permission is denied.</p>
+
+<p>• Video is disabled.</p>
+
+<p>• LiveKit temporarily reconnects.</p>
+
+<p>• A participant has no camera.</p>
+
+<p>• A participant joins in audio-only mode.</p>
+
+<p>The media interface must not cover critical board controls.</p>
+
+<p>Do not enable recording in the MVP.</p>
+
+<p>Do not claim end-to-end encryption unless it is explicitly configured and tested.</p>
+
+<p>Webhook requirements:</p>
+
+<p>• Verify webhook authenticity.</p>
+
+<p>• Process events idempotently.</p>
+
+<p>• Store the processed event identifier.</p>
+
+<p>• Ignore duplicates.</p>
+
+<p>• Use webhooks to update lesson operational metadata where appropriate.</p>
+
+<p>• Do not treat webhooks as the sole source of lesson authorization truth.</p>
+
+<ol start="10">
+	<li>Lesson lifecycle</li>
+</ol>
+
+<p>10.1 Creating a lesson</p>
+
+<p>Tutor flow:</p>
+
+<p>1 Tutor signs in.</p>
+
+<p>2 Tutor selects:</p>
+
+<p>◦ Blank lesson board.</p>
+
+<p>◦ Existing personal board.</p>
+
+<p>◦ Existing material.</p>
+
+<p>◦ Reusable template.</p>
+
+<p>3 If an existing reusable board is selected, create a lesson-board fork.</p>
+
+<p>4 Preserve sourceBoardId.</p>
+
+<p>5 Create the lesson.</p>
+
+<p>6 Create tutor membership.</p>
+
+<p>7 Create the tutor’s owned library relationship.</p>
+
+<p>8 Generate an invitation code.</p>
+
+<p>9 Redirect to the lesson room.</p>
+
+<p>10 Provide a copyable invitation link.</p>
+
+<p>Do not run a lesson directly on a reusable public template.</p>
+
+<p>10.2 Joining a lesson</p>
+
+<p>Student flow:</p>
+
+<p>1 Open invitation link.</p>
+
+<p>2 Authenticate or create an account.</p>
+
+<p>3 Resolve invitation server-side.</p>
+
+<p>4 Display lesson title and tutor identity.</p>
+
+<p>5 Show camera and microphone preview.</p>
+
+<p>6 Permit audio-only or camera-off joining.</p>
+
+<p>7 Create or confirm lesson membership.</p>
+
+<p>8 Issue board and media tokens.</p>
+
+<p>9 Enter the lesson.</p>
+
+<p>10 Add the lesson board to the student library as viewed<em>in</em>lesson or shared<em>with</em>me.</p>
+
+<p>Invitation links must not reveal whether arbitrary user accounts exist.</p>
+
+<p>10.3 During a lesson</p>
+
+<p>Support:</p>
+
+<p>• Shared board editing.</p>
+
+<p>• Tutor and student cursors.</p>
+
+<p>• Selection presence.</p>
+
+<p>• Media tiles.</p>
+
+<p>• Active speaker state.</p>
+
+<p>• Tutor-follow mode.</p>
+
+<p>• Student independent navigation.</p>
+
+<p>• Student edit permission.</p>
+
+<p>• Checkpoint creation.</p>
+
+<p>• Focus mode.</p>
+
+<p>• Invite copying.</p>
+
+<p>• Connection recovery.</p>
+
+<p>• Clear role labels.</p>
+
+<p>10.4 Ending a lesson</p>
+
+<p>Ending a lesson must be an idempotent server operation.</p>
+
+<p>When a tutor ends a lesson:</p>
+
+<p>1 Verify the tutor can manage the lesson.</p>
+
+<p>2 Mark the lesson as ending.</p>
+
+<p>3 Create a final automatic checkpoint.</p>
+
+<p>4 Persist final lesson metadata.</p>
+
+<p>5 Generate or schedule board thumbnail generation.</p>
+
+<p>6 Mark the lesson as ended.</p>
+
+<p>7 Set endedAt.</p>
+
+<p>8 Preserve tutor ownership.</p>
+
+<p>9 Add or preserve tutor library item as owned.</p>
+
+<p>10 Add or preserve student library items as viewed<em>in</em>lesson.</p>
+
+<p>11 Preserve checkpoint history.</p>
+
+<p>12 Preserve board access according to the tutor’s selected post-lesson policy.</p>
+
+<p>13 Notify connected participants.</p>
+
+<p>14 Disconnect participants gracefully.</p>
+
+<p>15 Redirect to the lesson summary.</p>
+
+<p>Post-lesson access policy:</p>
+
+<p>type PostLessonAccess =</p>
+
+<p> | &quot;view<em>only&quot;
+</em></p>
+
+<p> | &quot;continue<em>collaborating&quot;
+</em></p>
+
+<p> | &quot;private<em>annotations</em>only&quot;</p>
+
+<p> | &quot;copy<em>only&quot;;
+</em></p>
+
+<p>Default to view<em>only.
+</em></p>
+
+<p>Never make the board public automatically.</p>
+
+<ol start="11">
+	<li>Profiles, libraries, and studio</li>
+</ol>
+
+<p>Separate these concepts:</p>
+
+<p>Profile</p>
+
+<p>Public or link-accessible identity and explicitly published content.</p>
+
+<p>Library</p>
+
+<p>Private workspace containing owned, saved, shared, copied, and previously viewed boards.</p>
+
+<p>Studio</p>
+
+<p>Content creation, organization, publishing, and access management.</p>
+
+<p>A tutor generally has:</p>
+
+<p>Profile + Library + Studio</p>
+
+<p>A student generally has:</p>
+
+<p>Private Library + Personal Boards + optional public Profile</p>
+
+<p>The same user may use all three.</p>
+
+<ol start="12">
+	<li>Routes</li>
+</ol>
+
+<p>Use route groups and clear access boundaries.</p>
+
+<p>Recommended application routes:</p>
+
+<p>/</p>
+
+<p>├── /features</p>
+
+<p>├── /about</p>
+
+<p>├── /sign-in</p>
+
+<p>├── /sign-up</p>
+
+<p>├── /verify-email</p>
+
+<p>├── /forgot-password</p>
+
+<p>├── /reset-password</p>
+
+<p>│</p>
+
+<p>├── /home</p>
+
+<p>├── /library</p>
+
+<p>├── /library/recent</p>
+
+<p>├── /library/saved</p>
+
+<p>├── /library/shared</p>
+
+<p>├── /library/lessons</p>
+
+<p>├── /library/owned</p>
+
+<p>├── /library/favorites</p>
+
+<p>│</p>
+
+<p>├── /studio</p>
+
+<p>├── /studio/boards</p>
+
+<p>├── /studio/boards/new</p>
+
+<p>├── /studio/boards/boardId</p>
+
+<p>├── /studio/collections</p>
+
+<p>├── /studio/collections/collectionId</p>
+
+<p>│</p>
+
+<p>├── /lesson/new</p>
+
+<p>├── /lesson/lessonId</p>
+
+<p>├── /lesson/lessonId/summary</p>
+
+<p>│</p>
+
+<p>├── /b/boardId</p>
+
+<p>├── /b/boardId/history</p>
+
+<p>│</p>
+
+<p>├── /settings/profile</p>
+
+<p>├── /settings/account</p>
+
+<p>├── /settings/security</p>
+
+<p>└── /settings/notifications</p>
+
+<p>Public profile URLs should appear as:</p>
+
+<p>/@username</p>
+
+<p>Implement them safely using one of these approaches:</p>
+
+<p>• A middleware rewrite from /@username to an internal route such as /u/username.</p>
+
+<p>• Another explicit route design that does not collide with application routes.</p>
+
+<p>Do not create a catch-all route that can shadow /library, /studio, /lesson, /settings, or other reserved routes.</p>
+
+<p>Public profile subroutes:</p>
+
+<p>/@username</p>
+
+<p>/@username/boards</p>
+
+<p>/@username/collections</p>
+
+<ol start="13">
+	<li>Public profile design</li>
+</ol>
+
+<p>The public profile is inspired by the information architecture of a creator channel, but it must be original and designed around visual educational boards rather than videos.</p>
+
+<p>Required sections:</p>
+
+<p>• Profile header.</p>
+
+<p>• Avatar or generated monogram.</p>
+
+<p>• Display name.</p>
+
+<p>• Username.</p>
+
+<p>• Tutor headline.</p>
+
+<p>• Biography.</p>
+
+<p>• Subjects.</p>
+
+<p>• Featured board.</p>
+
+<p>• Featured collection.</p>
+
+<p>• Published boards.</p>
+
+<p>• Public collections.</p>
+
+<p>• Search within published materials.</p>
+
+<p>• Sorting by newest and recently updated.</p>
+
+<p>• Share profile action.</p>
+
+<p>Do not include fake:</p>
+
+<p>• Follower counts.</p>
+
+<p>• Student counts.</p>
+
+<p>• Views.</p>
+
+<p>• Ratings.</p>
+
+<p>• Testimonials.</p>
+
+<p>• Completion statistics.</p>
+
+<p>• Likes.</p>
+
+<p>• Revenue claims.</p>
+
+<p>• Partner logos.</p>
+
+<p>A public student profile must show only content that the student explicitly published.</p>
+
+<p>Never expose:</p>
+
+<p>• Lesson attendance.</p>
+
+<p>• Tutors the student worked with.</p>
+
+<p>• Saved materials.</p>
+
+<p>• Recently viewed boards.</p>
+
+<p>• Private collections.</p>
+
+<p>• Progress.</p>
+
+<p>• Checkpoint position.</p>
+
+<p>• Private notes.</p>
+
+<p>• Shared boards that the student does not own.</p>
+
+<ol start="14">
+	<li>Private library design</li>
+</ol>
+
+<p>Required library sections:</p>
+
+<p>• Continue learning.</p>
+
+<p>• Recent lessons.</p>
+
+<p>• Saved from tutors.</p>
+
+<p>• Shared with me.</p>
+
+<p>• My boards.</p>
+
+<p>• Personal copies.</p>
+
+<p>• Favorites.</p>
+
+<p>• Collections by subject.</p>
+
+<p>Required filters:</p>
+
+<p>All</p>
+
+<p>Owned</p>
+
+<p>Saved</p>
+
+<p>Shared</p>
+
+<p>Lesson history</p>
+
+<p>Copied</p>
+
+<p>Favorites</p>
+
+<p>Required sorting:</p>
+
+<p>Recently opened</p>
+
+<p>Recently updated</p>
+
+<p>Newest</p>
+
+<p>Alphabetical</p>
+
+<p>Search across:</p>
+
+<p>• Board title.</p>
+
+<p>• Board description.</p>
+
+<p>• Owner display name.</p>
+
+<p>• Owner username.</p>
+
+<p>• Subject.</p>
+
+<p>• Collection title.</p>
+
+<p>Use URL search parameters for shareable filter state.</p>
+
+<p>The student must be able to:</p>
+
+<p>• Open a previous lesson board.</p>
+
+<p>• See current permission.</p>
+
+<p>• See who owns the board.</p>
+
+<p>• See which lesson produced it.</p>
+
+<p>• Resume from the last viewed checkpoint.</p>
+
+<p>• Save or unsave it.</p>
+
+<p>• Add it to a personal collection.</p>
+
+<p>• Mark it as favorite.</p>
+
+<p>• Make an independent copy.</p>
+
+<p>• Add private notes.</p>
+
+<p>• Remove it from a private collection.</p>
+
+<p>• See when access has been revoked.</p>
+
+<p>• Avoid accidentally editing the tutor’s original.</p>
+
+<ol start="15">
+	<li>Studio design</li>
+</ol>
+
+<p>The studio is for managing owned content.</p>
+
+<p>Required sections:</p>
+
+<p>• Draft boards.</p>
+
+<p>• Published boards.</p>
+
+<p>• Lesson boards.</p>
+
+<p>• Templates.</p>
+
+<p>• Collections.</p>
+
+<p>• Recently edited.</p>
+
+<p>• Access management.</p>
+
+<p>Board settings must include:</p>
+
+<p>• Title.</p>
+
+<p>• Description.</p>
+
+<p>• Board kind.</p>
+
+<p>• Thumbnail.</p>
+
+<p>• Visibility.</p>
+
+<p>• Publication status.</p>
+
+<p>• Collection membership.</p>
+
+<p>• Sharing permissions.</p>
+
+<p>• Provenance.</p>
+
+<p>• Lesson association.</p>
+
+<p>• Archive.</p>
+
+<p>• Delete.</p>
+
+<p>Publishing flow:</p>
+
+<p>1 User selects Publish.</p>
+
+<p>2 Server verifies ownership and publishing capability.</p>
+
+<p>3 Show a privacy confirmation.</p>
+
+<p>4 Explain that the board may contain names or lesson-specific notes.</p>
+
+<p>5 Explain public, unlisted, shared, and private visibility.</p>
+
+<p>6 Confirm that private student overlays are excluded.</p>
+
+<p>7 Generate or refresh the public thumbnail.</p>
+
+<p>8 Set publishedAt.</p>
+
+<p>9 Add an audit event.</p>
+
+<p>10 Invalidate profile caches.</p>
+
+<p>Unpublishing must remove the board from the public profile without deleting it.</p>
+
+<ol start="16">
+	<li>Visibility semantics</li>
+</ol>
+
+<p>Implement exact visibility semantics.</p>
+
+<p>Private</p>
+
+<p>• Only owner and explicitly authorized users.</p>
+
+<p>• Not discoverable.</p>
+
+<p>• Not available by link without authorization.</p>
+
+<p>• No public metadata leakage.</p>
+
+<p>Shared</p>
+
+<p>• Available only to explicit users or valid lesson members.</p>
+
+<p>• Not discoverable.</p>
+
+<p>• Link alone is insufficient without authorization.</p>
+
+<p>Unlisted</p>
+
+<p>• Accessible using the unlisted URL.</p>
+
+<p>• Not shown on public profile.</p>
+
+<p>• Not included in sitemap.</p>
+
+<p>• Add noindex.</p>
+
+<p>• Explain that the link may be reshared.</p>
+
+<p>Public</p>
+
+<p>• Visible on public profile.</p>
+
+<p>• May be indexed.</p>
+
+<p>• Public metadata and thumbnail are visible.</p>
+
+<p>• Private overlays are never included.</p>
+
+<p>A visibility change must immediately affect:</p>
+
+<p>• Public profile queries.</p>
+
+<p>• Board viewer authorization.</p>
+
+<p>• Search.</p>
+
+<p>• Metadata.</p>
+
+<p>• Open Graph output.</p>
+
+<p>• Cache invalidation.</p>
+
+<p>• Collection visibility.</p>
+
+<ol start="17">
+	<li>Board cards</li>
+</ol>
+
+<p>Create original board cards that emphasize visual canvas material.</p>
+
+<p>Each card may show:</p>
+
+<p>• Board thumbnail.</p>
+
+<p>• Title.</p>
+
+<p>• Owner.</p>
+
+<p>• Subject.</p>
+
+<p>• Collection.</p>
+
+<p>• Last updated time.</p>
+
+<p>• Checkpoint count when relevant.</p>
+
+<p>• Visibility indicator for the owner.</p>
+
+<p>• Current access level.</p>
+
+<p>• Save action.</p>
+
+<p>• Favorite action.</p>
+
+<p>• Open action.</p>
+
+<p>• Context menu based on permissions.</p>
+
+<p>Do not copy YouTube thumbnail styling.</p>
+
+<p>Avoid:</p>
+
+<p>• Video duration badges.</p>
+
+<p>• Fake view counts.</p>
+
+<p>• Oversized metadata.</p>
+
+<p>• Excessive card borders.</p>
+
+<p>• Every card having a heavy drop shadow.</p>
+
+<p>• Repeating the same action in multiple places.</p>
+
+<p>The thumbnail should show a meaningful fragment of the board when available.</p>
+
+<p>Fallback thumbnail:</p>
+
+<p>• Generated from title.</p>
+
+<p>• Uses drawi design tokens.</p>
+
+<p>• Includes a restrained abstract drawing motif.</p>
+
+<p>• Does not look like a broken image placeholder.</p>
+
+<ol start="18">
+	<li>Board page</li>
+</ol>
+
+<p>The board viewer and editor use the same route but derive capabilities server-side.</p>
+
+<p>Modes:</p>
+
+<p>type BoardMode =</p>
+
+<p> | &quot;owner&quot;</p>
+
+<p> | &quot;manager&quot;</p>
+
+<p> | &quot;editor&quot;</p>
+
+<p> | &quot;viewer&quot;</p>
+
+<p> | &quot;public<em>viewer&quot;;
+</em></p>
+
+<p>The server decides the mode.</p>
+
+<p>The client may render different tools based on the server result, but the synchronization backend must independently enforce mutation permission.</p>
+
+<p>Board page features:</p>
+
+<p>• Large canvas.</p>
+
+<p>• Board title.</p>
+
+<p>• Owner identity.</p>
+
+<p>• Save state.</p>
+
+<p>• Synchronization state.</p>
+
+<p>• Current permission.</p>
+
+<p>• Save to library.</p>
+
+<p>• Make a copy.</p>
+
+<p>• Add to collection.</p>
+
+<p>• Open checkpoint timeline.</p>
+
+<p>• Export when authorized.</p>
+
+<p>• Share when authorized.</p>
+
+<p>• Publish when authorized.</p>
+
+<p>• Private notes when authenticated.</p>
+
+<p>Do not place an invisible overlay above the tldraw canvas.</p>
+
+<p>Verify pointer events, keyboard shortcuts, touch behavior, and canvas focus.</p>
+
+<ol start="19">
+	<li>Lesson room layout</li>
+</ol>
+
+<p>Desktop layout:</p>
+
+<p>Top bar</p>
+
+<p>• drawi logo.</p>
+
+<p>• Lesson title.</p>
+
+<p>• Tutor/student role.</p>
+
+<p>• Board synchronization state.</p>
+
+<p>• Media connection state.</p>
+
+<p>• Invite button.</p>
+
+<p>• Participant button.</p>
+
+<p>• Focus mode.</p>
+
+<p>• Leave or end action.</p>
+
+<p>Main area</p>
+
+<p>• Canvas fills almost all available space.</p>
+
+<p>• Video rail floats in the upper-right by default.</p>
+
+<p>• Video rail can collapse.</p>
+
+<p>• Video rail can dock.</p>
+
+<p>• Video rail can be repositioned within controlled bounds.</p>
+
+<p>• Video rail must not cover essential canvas controls.</p>
+
+<p>• Active speaker is visible without excessive animation.</p>
+
+<p>Lesson controls</p>
+
+<p>• Microphone.</p>
+
+<p>• Camera.</p>
+
+<p>• Screen sharing.</p>
+
+<p>• Tutor-follow.</p>
+
+<p>• Student editing permission.</p>
+
+<p>• Checkpoint creation.</p>
+
+<p>• Checkpoint timeline.</p>
+
+<p>• Participants.</p>
+
+<p>• Leave.</p>
+
+<p>Mobile and narrow-screen behavior:</p>
+
+<p>• Prioritize viewing, panning, zooming, speaking, and basic annotation.</p>
+
+<p>• Use a collapsible media bottom sheet.</p>
+
+<p>• Avoid placing all desktop controls in one horizontal row.</p>
+
+<p>• Keep destructive actions separated.</p>
+
+<p>• Do not claim complete mobile editing parity unless it is tested.</p>
+
+<ol start="20">
+	<li>Tutor-follow mode</li>
+</ol>
+
+<p>Tutor-follow mode must be explicit.</p>
+
+<p>States:</p>
+
+<p>type FollowState =</p>
+
+<p> | &quot;independent&quot;</p>
+
+<p> | &quot;following<em>tutor&quot;
+</em></p>
+
+<p> | &quot;follow<em>requested&quot;
+</em></p>
+
+<p> | &quot;temporarily<em>detached&quot;;
+</em></p>
+
+<p>Requirements:</p>
+
+<p>• Tutor may request following.</p>
+
+<p>• Student must understand when following is active.</p>
+
+<p>• Student may stop following.</p>
+
+<p>• Student navigation may temporarily detach them.</p>
+
+<p>• Provide a clear “Return to tutor” action.</p>
+
+<p>• Do not unexpectedly snap the viewport repeatedly while the student is interacting.</p>
+
+<p>• Use tldraw viewport and presence capabilities where practical.</p>
+
+<p>• Do not use continuous LiveKit packets for viewport synchronization.</p>
+
+<ol start="21">
+	<li>Design direction</li>
+</ol>
+
+<p>Create a distinctive visual system called living notebook.</p>
+
+<p>The product should feel:</p>
+
+<p>• Calm.</p>
+
+<p>• Precise.</p>
+
+<p>• Tactile.</p>
+
+<p>• Intelligent.</p>
+
+<p>• Human.</p>
+
+<p>• Contemporary.</p>
+
+<p>• Slightly playful.</p>
+
+<p>• Suitable for serious study.</p>
+
+<p>• Visually connected to drawing and movement.</p>
+
+<p>Avoid:</p>
+
+<p>• Generic purple startup gradients.</p>
+
+<p>• Excessive glassmorphism.</p>
+
+<p>• Neon cyberpunk styling.</p>
+
+<p>• Huge rounded cards everywhere.</p>
+
+<p>• An interface assembled from unchanged component-library defaults.</p>
+
+<p>• Random gradient text.</p>
+
+<p>• Fake AI sparkle symbols.</p>
+
+<p>• Excessive blobs.</p>
+
+<p>• Excessive pill controls.</p>
+
+<p>• Decorative animations that compete with the lesson.</p>
+
+<p>• A direct imitation of Claude’s cream interface.</p>
+
+<p>• A direct imitation of tldraw’s product UI.</p>
+
+<p>• A direct imitation of YouTube’s channel layout.</p>
+
+<p>• A direct imitation of Linear’s dark interface.</p>
+
+<p>21.1 Color system</p>
+
+<p>Use CSS variables.</p>
+
+<p>Starting direction:</p>
+
+<p>:root </p>
+
+<p> --paper-0: #fbfaf6;</p>
+
+<p> --paper-1: #f5f1e8;</p>
+
+<p> --paper-2: #ebe5d9;</p>
+
+<p> --ink-0: #171715;</p>
+
+<p> --ink-1: #353530;</p>
+
+<p> --ink-2: #6f6d65;</p>
+
+<p> --ink-3: #9b978d;</p>
+
+<p> --line-subtle: rgba(23, 23, 21, 0.10);</p>
+
+<p> --line-strong: rgba(23, 23, 21, 0.22);</p>
+
+<p> --primary: #3156d3;</p>
+
+<p> --primary-hover: #2848b8;</p>
+
+<p> --primary-soft: #e8edff;</p>
+
+<p> --accent: #df6245;</p>
+
+<p> --accent-hover: #c95036;</p>
+
+<p> --accent-soft: #fbe9e3;</p>
+
+<p> --success: #39765a;</p>
+
+<p> --warning: #a66a22;</p>
+
+<p> --danger: #b8423e;</p>
+
+<p> --surface-raised: rgba(255, 255, 255, 0.82);</p>
+
+<p>}</p>
+
+<p>Treat these as starting values, not unquestionable constants.</p>
+
+<p>Verify contrast for:</p>
+
+<p>• Normal text.</p>
+
+<p>• Small metadata.</p>
+
+<p>• Disabled controls.</p>
+
+<p>• Focus rings.</p>
+
+<p>• Error text.</p>
+
+<p>• Status indicators.</p>
+
+<p>• Text placed on soft accent backgrounds.</p>
+
+<p>Do not encode tutor/student roles using color alone.</p>
+
+<p>21.2 Typography</p>
+
+<p>Use:</p>
+
+<p>• Geist Sans or another highly legible open sans-serif for interface text.</p>
+
+<p>• Newsreader or another restrained editorial serif for selected marketing headings.</p>
+
+<p>• Geist Mono or another legible monospaced font for codes and technical labels.</p>
+
+<p>Load fonts through next/font or local files already licensed for web use.</p>
+
+<p>Do not download or redistribute unlicensed font files.</p>
+
+<p>Suggested hierarchy:</p>
+
+<p>Display: 52–68 px desktop, 38–46 px mobile</p>
+
+<p>Page title: 34–44 px</p>
+
+<p>Section title: 22–28 px</p>
+
+<p>Card title: 16–20 px</p>
+
+<p>Body: 15–17 px</p>
+
+<p>Metadata: 12–14 px</p>
+
+<p>Control label: 13–15 px</p>
+
+<p>Use fluid sizing where it improves responsive behavior.</p>
+
+<p>21.3 Shape and elevation</p>
+
+<p>• Default component radius: 10 px.</p>
+
+<p>• Compact control radius: 8 px.</p>
+
+<p>• Dialog radius: 14–16 px.</p>
+
+<p>• Pill shape only for tags, compact toggles, and status chips.</p>
+
+<p>• Use thin borders.</p>
+
+<p>• Use shadows only for truly floating surfaces.</p>
+
+<p>• Avoid nested cards inside cards.</p>
+
+<p>• Use whitespace and typography before adding containers.</p>
+
+<p>21.4 Brand mark</p>
+
+<p>Create an original SVG logo.</p>
+
+<p>The mark should combine:</p>
+
+<p>• Lowercase d.</p>
+
+<p>• A continuous drawn stroke.</p>
+
+<p>• A subtle forward-motion gesture.</p>
+
+<p>• Visual simplicity at 16 px.</p>
+
+<p>• A recognizable silhouette at larger sizes.</p>
+
+<p>Create:</p>
+
+<p>• Full wordmark.</p>
+
+<p>• Compact icon.</p>
+
+<p>• Monochrome version.</p>
+
+<p>• Light-background version.</p>
+
+<p>• Dark-background version.</p>
+
+<p>• Accessible text alternative.</p>
+
+<p>Do not copy another company’s logo.</p>
+
+<p>21.5 Motion</p>
+
+<p>Use restrained motion:</p>
+
+<p>• 150–220 ms for common transitions.</p>
+
+<p>• Slightly longer for docking the video rail.</p>
+
+<p>• No unnecessary spring animation.</p>
+
+<p>• No continuous decorative motion.</p>
+
+<p>• Respect prefers-reduced-motion.</p>
+
+<p>• Do not animate the canvas for decoration.</p>
+
+<p>• Use opacity and small translation changes rather than large scaling effects.</p>
+
+<ol start="22">
+	<li>Component architecture</li>
+</ol>
+
+<p>Create focused components.</p>
+
+<p>Core layout:</p>
+
+<p>AppShell</p>
+
+<p>PublicHeader</p>
+
+<p>AuthenticatedSidebar</p>
+
+<p>MobileNavigation</p>
+
+<p>PageHeader</p>
+
+<p>EmptyState</p>
+
+<p>ErrorState</p>
+
+<p>LoadingState</p>
+
+<p>Profile and library:</p>
+
+<p>ProfileHeader</p>
+
+<p>ProfileSubjects</p>
+
+<p>FeaturedBoard</p>
+
+<p>BoardGrid</p>
+
+<p>BoardCard</p>
+
+<p>CollectionShelf</p>
+
+<p>CollectionCard</p>
+
+<p>LibraryFilters</p>
+
+<p>LibrarySearch</p>
+
+<p>LibrarySort</p>
+
+<p>ContinueLearningSection</p>
+
+<p>AccessBadge</p>
+
+<p>VisibilityBadge</p>
+
+<p>OwnerBadge</p>
+
+<p>Board:</p>
+
+<p>BoardShell</p>
+
+<p>CollaborativeBoard</p>
+
+<p>BoardHeader</p>
+
+<p>BoardToolbar</p>
+
+<p>BoardSyncStatus</p>
+
+<p>BoardPermissionIndicator</p>
+
+<p>BoardActionsMenu</p>
+
+<p>BoardCheckpointTimeline</p>
+
+<p>PrivateNotesPanel</p>
+
+<p>BoardErrorBoundary</p>
+
+<p>Lesson:</p>
+
+<p>LearningRoomShell</p>
+
+<p>MediaConnectionProvider</p>
+
+<p>ParticipantVideoRail</p>
+
+<p>ParticipantTile</p>
+
+<p>RoomControlBar</p>
+
+<p>TutorControls</p>
+
+<p>FollowTutorControl</p>
+
+<p>EditPermissionControl</p>
+
+<p>LessonStatus</p>
+
+<p>ConnectionRecoveryNotice</p>
+
+<p>InviteDialog</p>
+
+<p>DevicePreview</p>
+
+<p>EndLessonDialog</p>
+
+<p>Studio:</p>
+
+<p>StudioNavigation</p>
+
+<p>BoardSettingsForm</p>
+
+<p>VisibilitySelector</p>
+
+<p>PublishingDialog</p>
+
+<p>AccessManager</p>
+
+<p>CollectionEditor</p>
+
+<p>CollectionBoardSorter</p>
+
+<p>ThumbnailPreview</p>
+
+<p>Do not create one enormous LearningRoom.tsx component.</p>
+
+<p>Keep:</p>
+
+<p>• Data loading.</p>
+
+<p>• Authorization.</p>
+
+<p>• mutation services.</p>
+
+<p>• presentation.</p>
+
+<p>• real-time adapters.</p>
+
+<p>in separate modules.</p>
+
+<ol start="23">
+	<li>Server and client boundaries</li>
+</ol>
+
+<p>Use Server Components for:</p>
+
+<p>• Public profiles.</p>
+
+<p>• Library initial data.</p>
+
+<p>• Studio board listings.</p>
+
+<p>• Collection pages.</p>
+
+<p>• Board metadata.</p>
+
+<p>• Lesson metadata.</p>
+
+<p>• Authorization-derived page capabilities.</p>
+
+<p>• SEO metadata.</p>
+
+<p>Use Client Components for:</p>
+
+<p>• tldraw.</p>
+
+<p>• LiveKit.</p>
+
+<p>• Device preview.</p>
+
+<p>• Media controls.</p>
+
+<p>• Dragging and docking the video rail.</p>
+
+<p>• Optimistic save/favorite controls.</p>
+
+<p>• Dialog interactions.</p>
+
+<p>• Checkpoint progress.</p>
+
+<p>• Private notes editor.</p>
+
+<p>• Interactive filtering where server navigation is unsuitable.</p>
+
+<p>Never import server-only modules into Client Components.</p>
+
+<p>Mark sensitive modules with server-only.</p>
+
+<p>Keep database and secret-dependent modules outside client bundles.</p>
+
+<ol start="24">
+	<li>Service architecture</li>
+</ol>
+
+<p>Create server-side domain services.</p>
+
+<p>Suggested modules:</p>
+
+<p>services/</p>
+
+<p>├── profiles.service.ts</p>
+
+<p>├── boards.service.ts</p>
+
+<p>├── board-access.service.ts</p>
+
+<p>├── library.service.ts</p>
+
+<p>├── collections.service.ts</p>
+
+<p>├── lessons.service.ts</p>
+
+<p>├── checkpoints.service.ts</p>
+
+<p>├── invitations.service.ts</p>
+
+<p>├── media-token.service.ts</p>
+
+<p>├── board-token.service.ts</p>
+
+<p>├── publishing.service.ts</p>
+
+<p>└── assets.service.ts</p>
+
+<p>Create repositories only where they clarify persistence boundaries.</p>
+
+<p>Do not add generic repository abstractions that merely rename Drizzle methods.</p>
+
+<p>Use typed domain errors:</p>
+
+<p>type DomainErrorCode =</p>
+
+<p> | &quot;UNAUTHENTICATED&quot;</p>
+
+<p> | &quot;FORBIDDEN&quot;</p>
+
+<p> | &quot;NOT<em>FOUND&quot;
+</em></p>
+
+<p> | &quot;CONFLICT&quot;</p>
+
+<p> | &quot;VALIDATION<em>FAILED&quot;
+</em></p>
+
+<p> | &quot;RATE<em>LIMITED&quot;
+</em></p>
+
+<p> | &quot;EXTERNAL<em>SERVICE</em>UNAVAILABLE&quot;</p>
+
+<p> | &quot;BOARD<em>SYNC</em>UNAVAILABLE&quot;</p>
+
+<p> | &quot;MEDIA<em>UNAVAILABLE&quot;;
+</em></p>
+
+<p>Do not leak internal stack traces to users.</p>
+
+<ol start="25">
+	<li>Search and pagination</li>
+</ol>
+
+<p>For the MVP, use PostgreSQL search.</p>
+
+<p>Implement:</p>
+
+<p>• Normalized searchable title.</p>
+
+<p>• Description search.</p>
+
+<p>• Owner username and display-name search.</p>
+
+<p>• Subject search.</p>
+
+<p>• Collection-title search.</p>
+
+<p>• pg<em>trgm indexes where appropriate.
+</em></p>
+
+<p>• Cursor pagination.</p>
+
+<p>• Stable sorting with ID as a tie-breaker.</p>
+
+<p>Do not load all boards and filter them in the browser.</p>
+
+<p>Public search must return only public content.</p>
+
+<p>Private library search must scope results to the authenticated user’s accessible items.</p>
+
+<ol start="26">
+	<li>Thumbnail generation</li>
+</ol>
+
+<p>Generate thumbnails:</p>
+
+<p>• After explicit board save.</p>
+
+<p>• At lesson end.</p>
+
+<p>• Before publishing.</p>
+
+<p>• After meaningful content changes when manually requested.</p>
+
+<p>• Not after every stroke.</p>
+
+<p>Preferred MVP process:</p>
+
+<p>1 Use tldraw export capabilities in an authorized client context.</p>
+
+<p>2 Generate SVG or PNG.</p>
+
+<p>3 Convert to a bounded WebP thumbnail where practical.</p>
+
+<p>4 Upload through an authorized asset endpoint.</p>
+
+<p>5 Store the resulting asset metadata.</p>
+
+<p>6 Update the board thumbnail reference.</p>
+
+<p>7 Keep the previous valid thumbnail until the new one succeeds.</p>
+
+<p>Requirements:</p>
+
+<p>• Thumbnail failure does not block board persistence.</p>
+
+<p>• Public thumbnails must not contain private overlays.</p>
+
+<p>• Do not publish a thumbnail before visibility authorization.</p>
+
+<p>• Use deterministic dimensions.</p>
+
+<p>• Avoid leaking board content through an object URL after the board becomes private.</p>
+
+<p>• Invalidate public caches when the thumbnail changes.</p>
+
+<ol start="27">
+	<li>Accessibility</li>
+</ol>
+
+<p>Implement:</p>
+
+<p>• Semantic landmarks.</p>
+
+<p>• Keyboard navigation.</p>
+
+<p>• Visible focus states.</p>
+
+<p>• Accessible dialogs.</p>
+
+<p>• Proper labels for icon-only controls.</p>
+
+<p>• Accurate pressed, selected, checked, muted, and disabled states.</p>
+
+<p>• Screen-reader announcements for connection changes.</p>
+
+<p>• Screen-reader announcements for permission changes.</p>
+
+<p>• Sufficient contrast.</p>
+
+<p>• Reduced-motion support.</p>
+
+<p>• Browser zoom support.</p>
+
+<p>• Touch target sizes appropriate for mobile.</p>
+
+<p>• Captions integration point for a later milestone.</p>
+
+<p>• No keyboard traps outside intentional modal dialogs.</p>
+
+<p>The canvas may have accessibility limitations inherited from the canvas SDK. Document them honestly and make all surrounding application controls accessible.</p>
+
+<ol start="28">
+	<li>Security requirements</li>
+</ol>
+
+<p>Secrets</p>
+
+<p>Never expose:</p>
+
+<p>• Database credentials.</p>
+
+<p>• Better Auth secrets.</p>
+
+<p>• LiveKit API secret.</p>
+
+<p>• R2 secret keys.</p>
+
+<p>• Sentry auth token.</p>
+
+<p>• Board-token private key.</p>
+
+<p>• Internal worker credentials.</p>
+
+<p>• Resend API key.</p>
+
+<p>The tldraw browser license key may require client use. Treat it according to the vendor’s documented model, but never confuse it with a server secret.</p>
+
+<p>Input handling</p>
+
+<p>• Validate all input with Zod.</p>
+
+<p>• Trim and normalize usernames and titles.</p>
+
+<p>• Limit string lengths.</p>
+
+<p>• Sanitize rich text if rich text is introduced.</p>
+
+<p>• Reject dangerous file types.</p>
+
+<p>• Validate redirects.</p>
+
+<p>• Prevent path traversal in object keys.</p>
+
+<p>• Do not render user-provided HTML.</p>
+
+<p>• Use safe markdown rendering only if markdown is introduced.</p>
+
+<p>Rate limiting</p>
+
+<p>Rate-limit:</p>
+
+<p>• Sign-in.</p>
+
+<p>• Sign-up.</p>
+
+<p>• Password reset.</p>
+
+<p>• Verification requests.</p>
+
+<p>• Invitation resolution.</p>
+
+<p>• LiveKit token issuance.</p>
+
+<p>• Board token issuance.</p>
+
+<p>• Board copying.</p>
+
+<p>• Upload initialization.</p>
+
+<p>• Public profile requests if abusive behavior is detected.</p>
+
+<p>Use Redis-compatible infrastructure only if actually required. Do not add Redis merely for architectural appearance. A provider such as Upstash may be introduced behind a small rate-limit adapter.</p>
+
+<p>CSRF and request security</p>
+
+<p>• Use the authentication framework’s supported CSRF protections.</p>
+
+<p>• Validate origin where appropriate.</p>
+
+<p>• Use same-site cookies.</p>
+
+<p>• Use secure cookies in production.</p>
+
+<p>• Verify webhook signatures.</p>
+
+<p>• Use idempotency for sensitive repeated requests.</p>
+
+<p>• Set appropriate security headers.</p>
+
+<p>• Configure a realistic Content Security Policy.</p>
+
+<p>• Do not break tldraw or LiveKit by adding an untested CSP.</p>
+
+<p>Privacy</p>
+
+<p>• Do not record calls.</p>
+
+<p>• Do not store audio or video.</p>
+
+<p>• Do not expose private student activity.</p>
+
+<p>• Do not make lesson boards public automatically.</p>
+
+<p>• Do not include private content in analytics.</p>
+
+<p>• Do not expose participants through public metadata.</p>
+
+<p>• Allow board owners to revoke future access.</p>
+
+<p>• Preserve legitimate audit records without pretending revocation deletes historical facts.</p>
+
+<ol start="29">
+	<li>Error handling</li>
+</ol>
+
+<p>Create distinct states for:</p>
+
+<p>• Authentication expired.</p>
+
+<p>• Invalid invitation.</p>
+
+<p>• Revoked invitation.</p>
+
+<p>• Lesson not started.</p>
+
+<p>• Lesson ended.</p>
+
+<p>• Board not found.</p>
+
+<p>• Access revoked.</p>
+
+<p>• Board synchronization unavailable.</p>
+
+<p>• Board reconnecting.</p>
+
+<p>• Media permission denied.</p>
+
+<p>• LiveKit unavailable.</p>
+
+<p>• Media reconnecting.</p>
+
+<p>• Upload failed.</p>
+
+<p>• Checkpoint creation failed.</p>
+
+<p>• Checkpoint restore failed.</p>
+
+<p>• Thumbnail generation failed.</p>
+
+<p>• Database unavailable.</p>
+
+<p>• Rate limited.</p>
+
+<p>Do not show generic “Something went wrong” when a more specific safe explanation is available.</p>
+
+<p>Every retry button must have real behavior.</p>
+
+<p>Do not render buttons that are visually active but unimplemented.</p>
+
+<ol start="30">
+	<li>Environment variables</li>
+</ol>
+
+<p>Create strict server and client environment schemas.</p>
+
+<p>Example variables:</p>
+
+<p>NODE<em>ENV
+</em></p>
+
+<p>APP<em>URL
+</em></p>
+
+<p>DATABASE<em>URL
+</em></p>
+
+<p>BETTER<em>AUTH</em>SECRET</p>
+
+<p>BETTER<em>AUTH</em>URL</p>
+
+<p>GOOGLE<em>CLIENT</em>ID</p>
+
+<p>GOOGLE<em>CLIENT</em>SECRET</p>
+
+<p>RESEND<em>API</em>KEY</p>
+
+<p>EMAIL<em>FROM
+</em></p>
+
+<p>LIVEKIT<em>URL
+</em></p>
+
+<p>NEXT<em>PUBLIC</em>LIVEKIT<em>URL
+</em></p>
+
+<p>LIVEKIT<em>API</em>KEY</p>
+
+<p>LIVEKIT<em>API</em>SECRET</p>
+
+<p>NEXT<em>PUBLIC</em>TLDRAW<em>LICENSE</em>KEY</p>
+
+<p>NEXT<em>PUBLIC</em>TLDRAW<em>SYNC</em>URL</p>
+
+<p>BOARD<em>TOKEN</em>PRIVATE<em>KEY
+</em></p>
+
+<p>BOARD<em>TOKEN</em>PUBLIC<em>KEY
+</em></p>
+
+<p>BOARD<em>TOKEN</em>ISSUER</p>
+
+<p>BOARD<em>TOKEN</em>AUDIENCE</p>
+
+<p>SYNC<em>INTERNAL</em>API<em>URL
+</em></p>
+
+<p>SYNC<em>INTERNAL</em>AUTH<em>SECRET
+</em></p>
+
+<p>CLOUDFLARE<em>ACCOUNT</em>ID</p>
+
+<p>CLOUDFLARE<em>API</em>TOKEN</p>
+
+<p>R2<em>BUCKET</em>NAME</p>
+
+<p>R2<em>ENDPOINT
+</em></p>
+
+<p>R2<em>ACCESS</em>KEY<em>ID
+</em></p>
+
+<p>R2<em>SECRET</em>ACCESS<em>KEY
+</em></p>
+
+<p>SENTRY<em>DSN
+</em></p>
+
+<p>NEXT<em>PUBLIC</em>SENTRY<em>DSN
+</em></p>
+
+<p>SENTRY<em>AUTH</em>TOKEN</p>
+
+<p>SENTRY<em>ENVIRONMENT
+</em></p>
+
+<p>RATE<em>LIMIT</em>REDIS<em>URL
+</em></p>
+
+<p>RATE<em>LIMIT</em>REDIS<em>TOKEN
+</em></p>
+
+<p>Rules:</p>
+
+<p>• Optional services must be clearly marked optional.</p>
+
+<p>• Missing required development configuration must produce a useful setup page.</p>
+
+<p>• Never silently fall back to insecure production behavior.</p>
+
+<p>• .env.example must contain descriptions but no real secrets.</p>
+
+<p>• Client variables must be explicitly separated from server variables.</p>
+
+<ol start="31">
+	<li>Development environment</li>
+</ol>
+
+<p>Provide:</p>
+
+<p>• docker-compose.yml with local PostgreSQL.</p>
+
+<p>• Documented local LiveKit option or clear LiveKit Cloud setup.</p>
+
+<p>• Wrangler local development for the sync worker.</p>
+
+<p>• Seed script with development-only sample data.</p>
+
+<p>• Database reset script that refuses to run against a production database.</p>
+
+<p>• One-command development startup where practical.</p>
+
+<p>Expected commands:</p>
+
+<p>pnpm install</p>
+
+<p>pnpm dev</p>
+
+<p>pnpm build</p>
+
+<p>pnpm lint</p>
+
+<p>pnpm typecheck</p>
+
+<p>pnpm test</p>
+
+<p>pnpm test:integration</p>
+
+<p>pnpm test:e2e</p>
+
+<p>pnpm format</p>
+
+<p>pnpm format:check</p>
+
+<p>pnpm db:generate</p>
+
+<p>pnpm db:migrate</p>
+
+<p>pnpm db:studio</p>
+
+<p>pnpm db:seed</p>
+
+<p>pnpm sync:dev</p>
+
+<p>pnpm sync:deploy</p>
+
+<p>Every command must be documented and functional.</p>
+
+<ol start="32">
+	<li>Testing requirements</li>
+</ol>
+
+<p>Unit tests</p>
+
+<p>Test:</p>
+
+<p>• Username normalization.</p>
+
+<p>• Reserved usernames.</p>
+
+<p>• Visibility rules.</p>
+
+<p>• Board ownership.</p>
+
+<p>• Board permission resolution.</p>
+
+<p>• Lesson role resolution.</p>
+
+<p>• Invitation expiration.</p>
+
+<p>• Invite-code generation.</p>
+
+<p>• Board-copy provenance.</p>
+
+<p>• Library relationship behavior.</p>
+
+<p>• Collection ordering.</p>
+
+<p>• Checkpoint validation.</p>
+
+<p>• Environment validation.</p>
+
+<p>• Token claim construction.</p>
+
+<p>• Post-lesson access policies.</p>
+
+<p>• Domain error mapping.</p>
+
+<p>Integration tests</p>
+
+<p>Test with a real test database:</p>
+
+<p>• User and profile creation.</p>
+
+<p>• Unique username behavior.</p>
+
+<p>• Board creation.</p>
+
+<p>• Template-to-lesson fork.</p>
+
+<p>• Student lesson membership.</p>
+
+<p>• Student library insertion.</p>
+
+<p>• Save without duplication.</p>
+
+<p>• Make-copy ownership.</p>
+
+<p>• Access grant.</p>
+
+<p>• Access downgrade.</p>
+
+<p>• Access revocation.</p>
+
+<p>• Public publishing.</p>
+
+<p>• Unpublishing.</p>
+
+<p>• Public collection filtering.</p>
+
+<p>• Lesson ending idempotency.</p>
+
+<p>• Checkpoint metadata transaction.</p>
+
+<p>• Audit-event creation.</p>
+
+<p>End-to-end tests</p>
+
+<p>Implement Playwright tests for:</p>
+
+<p>1 User signs up.</p>
+
+<p>2 User verifies or uses a deterministic test verification path.</p>
+
+<p>3 User completes profile onboarding.</p>
+
+<p>4 Tutor creates a blank lesson.</p>
+
+<p>5 Tutor copies an invitation link.</p>
+
+<p>6 Student joins the lesson.</p>
+
+<p>7 Tutor and student see the same lesson identity.</p>
+
+<p>8 Tutor and student see the shared board.</p>
+
+<p>9 Tutor and student roles are correct.</p>
+
+<p>10 Tutor disables student editing.</p>
+
+<p>11 Student controls update.</p>
+
+<p>12 Unauthorized student mutation is rejected by the synchronization boundary.</p>
+
+<p>13 Tutor creates a checkpoint.</p>
+
+<p>14 Student sees the checkpoint.</p>
+
+<p>15 Student cannot restore the checkpoint.</p>
+
+<p>16 Tutor ends the lesson.</p>
+
+<p>17 Tutor sees the board in the owned library.</p>
+
+<p>18 Student sees the board in lesson history.</p>
+
+<p>19 Student saves the board.</p>
+
+<p>20 Saving does not duplicate the board.</p>
+
+<p>21 Student makes a personal copy.</p>
+
+<p>22 The copy has the student as owner.</p>
+
+<p>23 Tutor publishes a separate material board.</p>
+
+<p>24 The public board appears on the tutor profile.</p>
+
+<p>25 A private board does not appear publicly.</p>
+
+<p>26 Student private history does not appear on the public profile.</p>
+
+<p>27 User creates a collection.</p>
+
+<p>28 User adds boards to the collection.</p>
+
+<p>29 Collection order persists.</p>
+
+<p>30 Camera-disabled lesson joining works.</p>
+
+<p>31 Missing LiveKit configuration shows a useful setup state.</p>
+
+<p>32 Media reconnection does not destroy the board.</p>
+
+<p>33 Board reconnection is shown independently from media state.</p>
+
+<p>34 Keyboard navigation works for primary controls.</p>
+
+<p>35 Critical pages pass automated accessibility checks.</p>
+
+<p>Use deterministic fixtures.</p>
+
+<p>Do not depend on arbitrary timeouts where event-based waiting is possible.</p>
+
+<ol start="33">
+	<li>Continuous integration</li>
+</ol>
+
+<p>Create GitHub Actions workflows.</p>
+
+<p>For pull requests:</p>
+
+<p>1 Install dependencies with frozen lockfile.</p>
+
+<p>2 Validate formatting.</p>
+
+<p>3 Run lint.</p>
+
+<p>4 Run typecheck.</p>
+
+<p>5 Run unit tests.</p>
+
+<p>6 Run integration tests.</p>
+
+<p>7 Build all packages.</p>
+
+<p>8 Validate Drizzle migrations.</p>
+
+<p>9 Validate Cloudflare worker build.</p>
+
+<p>10 Run Playwright smoke tests.</p>
+
+<p>11 Upload Playwright report on failure.</p>
+
+<p>Use dependency caching.</p>
+
+<p>Do not expose production credentials to untrusted pull requests.</p>
+
+<ol start="34">
+	<li>Documentation</li>
+</ol>
+
+<p>README.md</p>
+
+<p>Include:</p>
+
+<p>• Product description.</p>
+
+<p>• Screenshots only after the screens exist.</p>
+
+<p>• Architecture overview.</p>
+
+<p>• Mermaid architecture diagram.</p>
+
+<p>• Repository structure.</p>
+
+<p>• Local setup.</p>
+
+<p>• Database setup.</p>
+
+<p>• Better Auth setup.</p>
+
+<p>• LiveKit setup.</p>
+
+<p>• tldraw license requirement.</p>
+
+<p>• Synchronization worker setup.</p>
+
+<p>• Cloudflare R2 setup.</p>
+
+<p>• Required environment variables.</p>
+
+<p>• Development commands.</p>
+
+<p>• Testing commands.</p>
+
+<p>• Deployment.</p>
+
+<p>• Known limitations.</p>
+
+<p>• Production checklist.</p>
+
+<p>• Privacy limitations.</p>
+
+<p>• Troubleshooting.</p>
+
+<p>AGENTS.md</p>
+
+<p>Include:</p>
+
+<p>• Repository structure.</p>
+
+<p>• Commands.</p>
+
+<p>• Architectural boundaries.</p>
+
+<p>• Naming conventions.</p>
+
+<p>• Server/client rules.</p>
+
+<p>• Security rules.</p>
+
+<p>• Testing expectations.</p>
+
+<p>• Definition of done.</p>
+
+<p>• Rule against fake controls.</p>
+
+<p>• Rule against unauthorized copying.</p>
+
+<p>• Rule against destructive Git operations.</p>
+
+<p>• Rule requiring permission tests for authorization changes.</p>
+
+<p>docs/architecture.md</p>
+
+<p>Include:</p>
+
+<p>• System-context diagram.</p>
+
+<p>• Container diagram.</p>
+
+<p>• Request flows.</p>
+
+<p>• Live lesson sequence.</p>
+
+<p>• Board synchronization sequence.</p>
+
+<p>• Token issuance.</p>
+
+<p>• Lesson-ending sequence.</p>
+
+<p>• Board publishing sequence.</p>
+
+<p>• Failure boundaries.</p>
+
+<p>• Provider abstractions.</p>
+
+<p>docs/licensing.md</p>
+
+<p>Include:</p>
+
+<p>• tldraw production licensing requirement.</p>
+
+<p>• LiveKit dependency notices.</p>
+
+<p>• UI-library licenses.</p>
+
+<p>• Font licenses.</p>
+
+<p>• Asset licenses.</p>
+
+<p>• Process for adding new dependencies.</p>
+
+<p>• Statement that GitHub availability does not automatically permit unrestricted commercial copying.</p>
+
+<p>THIRD<em>PARTY</em>NOTICES.md</p>
+
+<p>Generate and maintain notices for production dependencies where required.</p>
+
+<ol start="35">
+	<li>Implementation milestones</li>
+</ol>
+
+<p>Milestone 0: Repository audit and planning</p>
+
+<p>Deliver:</p>
+
+<p>• Repository audit.</p>
+
+<p>• Architecture plan.</p>
+
+<p>• Data model.</p>
+
+<p>• ADRs.</p>
+
+<p>• Risk list.</p>
+
+<p>• Licensing notes.</p>
+
+<p>• Execution plan.</p>
+
+<p>Do not implement major features before this milestone exists.</p>
+
+<p>Milestone 1: Foundation</p>
+
+<p>Implement:</p>
+
+<p>• Monorepo setup.</p>
+
+<p>• Shared TypeScript configuration.</p>
+
+<p>• Linting and formatting.</p>
+
+<p>• Tailwind.</p>
+
+<p>• Design tokens.</p>
+
+<p>• Base design-system components.</p>
+
+<p>• Environment validation.</p>
+
+<p>• Local PostgreSQL.</p>
+
+<p>• Drizzle migrations.</p>
+
+<p>• Basic application shell.</p>
+
+<p>• Landing page.</p>
+
+<p>Verify:</p>
+
+<p>• Install.</p>
+
+<p>• Lint.</p>
+
+<p>• Typecheck.</p>
+
+<p>• Unit tests.</p>
+
+<p>• Build.</p>
+
+<p>Milestone 2: Authentication and profiles</p>
+
+<p>Implement:</p>
+
+<p>• Better Auth.</p>
+
+<p>• Sign-up.</p>
+
+<p>• Sign-in.</p>
+
+<p>• Sign-out.</p>
+
+<p>• Email verification.</p>
+
+<p>• Password reset.</p>
+
+<p>• Profile onboarding.</p>
+
+<p>• Username validation.</p>
+
+<p>• Private-by-default profiles.</p>
+
+<p>• Public profile opt-in.</p>
+
+<p>• Settings.</p>
+
+<p>Verify authorization and cookie behavior.</p>
+
+<p>Milestone 3: Board metadata, library, and studio</p>
+
+<p>Implement:</p>
+
+<p>• Board metadata.</p>
+
+<p>• Ownership.</p>
+
+<p>• Access records.</p>
+
+<p>• Library relationships.</p>
+
+<p>• Save.</p>
+
+<p>• Unsave.</p>
+
+<p>• Favorite.</p>
+
+<p>• Make a copy.</p>
+
+<p>• Collections.</p>
+
+<p>• Studio listings.</p>
+
+<p>• Public profile.</p>
+
+<p>• Public visibility.</p>
+
+<p>• Unlisted visibility.</p>
+
+<p>• Search.</p>
+
+<p>• Cursor pagination.</p>
+
+<p>Use real database data.</p>
+
+<p>Milestone 4: Local tldraw board</p>
+
+<p>Implement:</p>
+
+<p>• tldraw editor.</p>
+
+<p>• Board shell.</p>
+
+<p>• Owner/editor/viewer interface modes.</p>
+
+<p>• Local persistence only as an intermediate development step.</p>
+
+<p>• Board thumbnails.</p>
+
+<p>• Private notes prototype.</p>
+
+<p>• Board exports where feasible.</p>
+
+<p>Do not represent local-only persistence as complete collaboration.</p>
+
+<p>Milestone 5: Production-oriented tldraw synchronization</p>
+
+<p>Implement:</p>
+
+<p>• Cloudflare sync worker.</p>
+
+<p>• Durable Objects.</p>
+
+<p>• Board access tokens.</p>
+
+<p>• View/edit enforcement.</p>
+
+<p>• R2 asset storage.</p>
+
+<p>• Reconnect states.</p>
+
+<p>• Presence.</p>
+
+<p>• Cursors.</p>
+
+<p>• Production provider boundary.</p>
+
+<p>• Temporary demo provider removed or development-only.</p>
+
+<p>Milestone 6: LiveKit lesson rooms</p>
+
+<p>Implement:</p>
+
+<p>• Lesson creation.</p>
+
+<p>• Invitations.</p>
+
+<p>• Device preview.</p>
+
+<p>• LiveKit token endpoint.</p>
+
+<p>• Audio/video.</p>
+
+<p>• Screen sharing.</p>
+
+<p>• Video rail.</p>
+
+<p>• Media states.</p>
+
+<p>• Participant identity mapping.</p>
+
+<p>• Webhook verification.</p>
+
+<p>• Tutor/student controls.</p>
+
+<p>Milestone 7: Lesson permissions and checkpoints</p>
+
+<p>Implement:</p>
+
+<p>• Tutor edit-permission controls.</p>
+
+<p>• Backend synchronization enforcement.</p>
+
+<p>• Tutor-follow mode.</p>
+
+<p>• Checkpoint creation.</p>
+
+<p>• Checkpoint storage.</p>
+
+<p>• Safe restoration.</p>
+
+<p>• Lesson ending.</p>
+
+<p>• Lesson summary.</p>
+
+<p>• Post-lesson library insertion.</p>
+
+<p>• Post-lesson access policy.</p>
+
+<p>Milestone 8: Product-quality pass</p>
+
+<p>Implement:</p>
+
+<p>• Responsive behavior.</p>
+
+<p>• Accessibility.</p>
+
+<p>• Empty states.</p>
+
+<p>• Error states.</p>
+
+<p>• Skeletons.</p>
+
+<p>• Visual polish.</p>
+
+<p>• Public SEO.</p>
+
+<p>• Private noindex.</p>
+
+<p>• Sentry.</p>
+
+<p>• Structured logs.</p>
+
+<p>• Security headers.</p>
+
+<p>• Rate limiting.</p>
+
+<p>• Full tests.</p>
+
+<p>• Documentation.</p>
+
+<ol start="36">
+	<li>Visual review workflow</li>
+</ol>
+
+<p>After implementing each major page:</p>
+
+<p>1 Run the application.</p>
+
+<p>2 Open it through Playwright.</p>
+
+<p>3 Capture screenshots at:</p>
+
+<p>◦ 1440 × 1000.</p>
+
+<p>◦ 1024 × 900.</p>
+
+<p>◦ 768 × 1024.</p>
+
+<p>◦ 390 × 844.</p>
+
+<p>4 Inspect:</p>
+
+<p>◦ Hierarchy.</p>
+
+<p>◦ Alignment.</p>
+
+<p>◦ Spacing.</p>
+
+<p>◦ Typography.</p>
+
+<p>◦ Overflow.</p>
+
+<p>◦ Empty space.</p>
+
+<p>◦ Contrast.</p>
+
+<p>◦ Repeated visual patterns.</p>
+
+<p>◦ Canvas prominence.</p>
+
+<p>◦ Video-rail obstruction.</p>
+
+<p>◦ Mobile navigation.</p>
+
+<p>5 Fix visible defects.</p>
+
+<p>6 Repeat screenshots.</p>
+
+<p>7 Keep only useful screenshots in documentation.</p>
+
+<p>Do not declare the design polished without performing an actual rendered review.</p>
+
+<ol start="37">
+	<li>Explicit non-goals for the first MVP</li>
+</ol>
+
+<p>Do not implement yet:</p>
+
+<p>• Billing.</p>
+
+<p>• Tutor marketplace.</p>
+
+<p>• Ratings.</p>
+
+<p>• Reviews.</p>
+
+<p>• Public comments.</p>
+
+<p>• Likes.</p>
+
+<p>• Follower counts.</p>
+
+<p>• Recommendation feed.</p>
+
+<p>• AI tutor.</p>
+
+<p>• AI-generated lesson summaries.</p>
+
+<p>• AI board generation.</p>
+
+<p>• Automatic grading.</p>
+
+<p>• Calendar scheduling.</p>
+
+<p>• Attendance analytics.</p>
+
+<p>• Complex course completion.</p>
+
+<p>• Video recording.</p>
+
+<p>• Audio recording.</p>
+
+<p>• Full webinar mode.</p>
+
+<p>• Native mobile applications.</p>
+
+<p>• Enterprise organizations.</p>
+
+<p>• School administration.</p>
+
+<p>• SCORM.</p>
+
+<p>• LMS integrations.</p>
+
+<p>• Public student progress.</p>
+
+<p>Design extension points where reasonable, but do not add speculative abstraction for these features.</p>
+
+<ol start="38">
+	<li>Engineering rules
+
+		<p>• TypeScript strict mode is mandatory.</p>
+
+		<p>• Avoid any.</p>
+
+		<p>• An isolated any requires a comment explaining why it is unavoidable.</p>
+
+		<p>• Do not suppress TypeScript errors to finish faster.</p>
+
+		<p>• Do not disable ESLint rules globally without an ADR-level reason.</p>
+
+		<p>• Do not use non-null assertions for values that can genuinely be absent.</p>
+
+		<p>• Use discriminated unions for state machines.</p>
+
+		<p>• Use transactions for multi-record invariants.</p>
+
+		<p>• Use database constraints.</p>
+
+		<p>• Avoid giant components.</p>
+
+		<p>• Avoid giant service files.</p>
+
+		<p>• Avoid circular package dependencies.</p>
+
+		<p>• Avoid generic utility dumping grounds.</p>
+
+		<p>• Keep third-party APIs behind adapters.</p>
+
+		<p>• Do not expose raw database records directly to Client Components.</p>
+
+		<p>• Do not return secrets from Server Actions.</p>
+
+		<p>• Do not log tokens.</p>
+
+		<p>• Do not use fake production data.</p>
+
+		<p>• Development seed data must be visibly fictional.</p>
+
+		<p>• Do not add placeholder buttons.</p>
+
+		<p>• Do not mark TODO functionality as complete.</p>
+
+		<p>• Do not silently catch errors.</p>
+
+		<p>• Do not use empty catch blocks.</p>
+
+		<p>• Do not mutate unrelated code.</p>
+
+		<p>• Do not perform destructive Git operations.</p>
+
+		<p>• Do not use the tldraw demo server in production.</p>
+
+		<p>• Do not send whiteboard strokes through LiveKit.</p>
+
+		<p>• Do not publish lesson boards automatically.</p>
+
+		<p>• Do not expose student history publicly.</p>
+
+		<p>• Do not treat “saved” as “owned.”</p>
+
+		<p>• Do not let a live lesson mutate a reusable tutor template.</p>
+
+		<p>• Do not rely only on client-side permissions.</p></li>
+	<li>Definition of done</li>
+</ol>
+
+<p>The MVP is complete only when all of the following are true:</p>
+
+<p>Repository</p>
+
+<p>• Fresh clone installs using documented commands.</p>
+
+<p>• Lockfile is committed.</p>
+
+<p>• Environment variables are documented.</p>
+
+<p>• Local database starts successfully.</p>
+
+<p>• Database migrations apply from zero.</p>
+
+<p>• Seed data runs only in development.</p>
+
+<p>• No unrelated user work was destroyed.</p>
+
+<p>Quality checks</p>
+
+<p>• Formatting check passes.</p>
+
+<p>• Lint passes.</p>
+
+<p>• Typecheck passes.</p>
+
+<p>• Unit tests pass.</p>
+
+<p>• Integration tests pass.</p>
+
+<p>• Production build passes.</p>
+
+<p>• Sync-worker build passes.</p>
+
+<p>• Playwright critical tests pass.</p>
+
+<p>• No unexpected browser console errors occur.</p>
+
+<p>Authentication</p>
+
+<p>• User can register.</p>
+
+<p>• User can verify email.</p>
+
+<p>• User can sign in.</p>
+
+<p>• User can sign out.</p>
+
+<p>• User can reset password.</p>
+
+<p>• Protected pages reject unauthenticated users.</p>
+
+<p>• Server-side mutations repeat authorization checks.</p>
+
+<p>Profiles</p>
+
+<p>• User can create a profile.</p>
+
+<p>• Username uniqueness works case-insensitively.</p>
+
+<p>• Tutor can explicitly publish a profile.</p>
+
+<p>• Private student profile remains private.</p>
+
+<p>• Public profile shows only public content.</p>
+
+<p>• Reserved routes cannot become usernames.</p>
+
+<p>Boards</p>
+
+<p>• User can create a board.</p>
+
+<p>• Board persists.</p>
+
+<p>• Owner is explicit.</p>
+
+<p>• View, edit, and manage permissions differ.</p>
+
+<p>• Synchronization backend rejects unauthorized mutation.</p>
+
+<p>• Board reconnect state works.</p>
+
+<p>• Board assets persist.</p>
+
+<p>• Board has a thumbnail or valid fallback.</p>
+
+<p>• Board can be archived.</p>
+
+<p>• Board can be copied with provenance.</p>
+
+<p>Library</p>
+
+<p>• Owned boards appear.</p>
+
+<p>• Saved boards appear without duplication.</p>
+
+<p>• Lesson-history boards appear.</p>
+
+<p>• Shared boards appear.</p>
+
+<p>• Favorites work.</p>
+
+<p>• Search works.</p>
+
+<p>• Filters work.</p>
+
+<p>• Cursor pagination works.</p>
+
+<p>• Removed access is represented correctly.</p>
+
+<p>• Library data is private.</p>
+
+<p>Collections</p>
+
+<p>• User can create a collection.</p>
+
+<p>• User can add a board.</p>
+
+<p>• User can remove a board.</p>
+
+<p>• User can reorder boards.</p>
+
+<p>• Private collections remain private.</p>
+
+<p>• Public collections do not expose private boards.</p>
+
+<p>Public content</p>
+
+<p>• Tutor can publish a board.</p>
+
+<p>• Public board appears on the profile.</p>
+
+<p>• Tutor can unpublish it.</p>
+
+<p>• Unlisted board does not appear on the profile.</p>
+
+<p>• Private board is inaccessible publicly.</p>
+
+<p>• Private overlays never appear publicly.</p>
+
+<p>• Public metadata and Open Graph information are correct.</p>
+
+<p>Lessons</p>
+
+<p>• Tutor can create a lesson.</p>
+
+<p>• Student can join through an invitation.</p>
+
+<p>• Both map to correct application identities.</p>
+
+<p>• Both enter the same LiveKit room.</p>
+
+<p>• Both enter the same board room.</p>
+
+<p>• Audio-only joining works.</p>
+
+<p>• Camera-off joining works.</p>
+
+<p>• Tutor and student roles are correct.</p>
+
+<p>• Tutor can change student edit permission.</p>
+
+<p>• Sync backend enforces the permission.</p>
+
+<p>• Tutor-follow mode works.</p>
+
+<p>• Student can stop following.</p>
+
+<p>• Tutor can create a checkpoint.</p>
+
+<p>• Student cannot restore it.</p>
+
+<p>• Tutor can safely restore it.</p>
+
+<p>• Tutor can end the lesson.</p>
+
+<p>• Ending is idempotent.</p>
+
+<p>• Tutor retains ownership.</p>
+
+<p>• Student receives lesson-history access.</p>
+
+<p>• Board is not made public automatically.</p>
+
+<p>Reliability</p>
+
+<p>• Board and media connection failures are independent.</p>
+
+<p>• Media failure does not destroy board work.</p>
+
+<p>• Board failure does not falsely report media failure.</p>
+
+<p>• Reconnection states are visible.</p>
+
+<p>• Failed uploads are recoverable.</p>
+
+<p>• Failed thumbnail generation does not lose a board.</p>
+
+<p>• Failed checkpoint restoration is handled safely.</p>
+
+<p>Design</p>
+
+<p>• Canvas remains the primary lesson surface.</p>
+
+<p>• Video does not dominate the room.</p>
+
+<p>• Public profile feels like an educational creator page without copying YouTube.</p>
+
+<p>• Library feels like a learning workspace, not a generic admin dashboard.</p>
+
+<p>• Design is consistent at desktop, tablet, and mobile widths.</p>
+
+<p>• No excessive cards, gradients, pills, or shadows.</p>
+
+<p>• Empty states are useful.</p>
+
+<p>• Loading states are intentional.</p>
+
+<p>• Controls have hover, focus, pressed, disabled, and error states.</p>
+
+<p>• Reduced-motion mode works.</p>
+
+<p>Security and privacy</p>
+
+<p>• No server secret appears in the browser bundle.</p>
+
+<p>• No access token appears in logs.</p>
+
+<p>• Webhooks are verified.</p>
+
+<p>• Token endpoints are rate-limited.</p>
+
+<p>• Board tokens are scoped and short-lived.</p>
+
+<p>• Private boards cannot be opened with only their IDs.</p>
+
+<p>• Student history is not public.</p>
+
+<p>• Private notes remain private.</p>
+
+<p>• Lesson media is not recorded.</p>
+
+<p>• Visibility changes are audited.</p>
+
+<p>• Production tldraw licensing requirements are documented.</p>
+
+<ol start="40">
+	<li>Final execution instructions</li>
+</ol>
+
+<p>Begin by inspecting the repository.</p>
+
+<p>Then produce:</p>
+
+<p>1 docs/implementation-plan.md</p>
+
+<p>2 docs/architecture.md</p>
+
+<p>3 docs/data-model.md</p>
+
+<p>4 docs/design-system.md</p>
+
+<p>5 docs/security.md</p>
+
+<p>6 docs/licensing.md</p>
+
+<p>7 Initial ADRs</p>
+
+<p>8 A milestone checklist</p>
+
+<p>After the plan is written, implement Milestone 1 completely.</p>
+
+<p>Do not begin multiple unfinished milestones simultaneously.</p>
+
+<p>At the end of each milestone:</p>
+
+<p>1 List files changed.</p>
+
+<p>2 Explain the architecture implemented.</p>
+
+<p>3 List commands executed.</p>
+
+<p>4 Report exact check results.</p>
+
+<p>5 Report known limitations.</p>
+
+<p>6 Report security or privacy risks.</p>
+
+<p>7 Update the milestone checklist.</p>
+
+<p>8 State the next implementation step.</p>
+
+<p>When third-party credentials are unavailable:</p>
+
+<p>• Implement a clear configuration boundary.</p>
+
+<p>• Provide .env.example.</p>
+
+<p>• Provide a useful setup state.</p>
+
+<p>• Add deterministic test adapters.</p>
+
+<p>• Do not fabricate a successful real connection.</p>
+
+<p>• Continue implementing all work that does not require the missing credentials.</p>
+
+<p>Prioritize correctness, privacy, maintainability, and coherent product behavior over generating a large quantity of code.</p>
+
+</body>
+</html>
+

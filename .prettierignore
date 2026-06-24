@@ -1,0 +1,16 @@
+node_modules/
+.pnpm-store/
+.next/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+.wrangler/
+.agents/
+tldraw-main/
+livekit-master/
+pnpm-lock.yaml
+apps/web/server/db/migrations/meta/
+apps/sync-worker/worker-configuration.d.ts
+index.html

@@ -1,0 +1,29 @@
+{
+  "name": "drawi",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @drawi/web dev",
+    "dev:sync": "pnpm --filter @drawi/sync-worker dev",
+    "dev:livekit": "livekit-server --dev",
+    "dev:db": "docker compose up postgres",
+    "build": "pnpm --filter @drawi/web build && pnpm --filter @drawi/sync-worker build",
+    "lint": "eslint .",
+    "typecheck": "pnpm --filter @drawi/web typecheck && pnpm --filter @drawi/sync-worker typecheck",
+    "test": "pnpm --filter @drawi/web test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @drawi/web db:generate",
+    "db:migrate": "pnpm --filter @drawi/web db:migrate",
+    "db:seed": "pnpm --filter @drawi/web db:seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.2.9",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.50.0"
+  }
+}

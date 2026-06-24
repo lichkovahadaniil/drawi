@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: drawi
+      POSTGRES_USER: drawi
+      POSTGRES_PASSWORD: drawi_dev_password
+    volumes:
+      - drawi_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drawi -d drawi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  drawi_postgres:
