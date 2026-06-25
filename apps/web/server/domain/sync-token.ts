@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { getServerEnv } from "../env/server";
+import { SYNC_ACCESS_COOKIE_TTL_SECONDS } from "./sync-access";
 import type { BoardPermission } from "./types";
 
 export interface SyncAccessClaims {
@@ -21,7 +22,10 @@ function sign(payload: string) {
     .digest("base64url");
 }
 
-export function createSyncCookieValue(claims: Omit<SyncAccessClaims, "exp">, ttlSeconds = 60) {
+export function createSyncCookieValue(
+  claims: Omit<SyncAccessClaims, "exp">,
+  ttlSeconds = SYNC_ACCESS_COOKIE_TTL_SECONDS,
+) {
   const payload = base64Url(
     JSON.stringify({ ...claims, exp: Math.floor(Date.now() / 1000) + ttlSeconds }),
   );

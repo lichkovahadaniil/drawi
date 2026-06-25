@@ -54,6 +54,8 @@ const router = AutoRouter<IRequest, [env: Env, ctx: ExecutionContext]>({
     return new Response("Not found", { status: 404 });
   });
 
-export default {
+const worker = {
   fetch: router.fetch,
 };
+
+export default worker;

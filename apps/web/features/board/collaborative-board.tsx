@@ -3,6 +3,11 @@
 import { useSync } from "@tldraw/sync";
 import { useMemo } from "react";
 import { Tldraw, type TLAssetStore, uniqueId } from "tldraw";
+import {
+  createBoardAssetUrl,
+  createBoardSyncUriResolver,
+  normalizeSyncOrigin,
+} from "./sync-client";
 
 export function CollaborativeBoard({
   boardId,
@@ -13,28 +18,17 @@ export function CollaborativeBoard({
   roomId: string;
   mode: "edit" | "view";
 }) {
-  const syncOrigin = process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL ?? "http://localhost:8787";
+  const syncOrigin = normalizeSyncOrigin(process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL);
   const assets = useMemo<TLAssetStore>(
     () => createAssetStore(syncOrigin, roomId),
     [syncOrigin, roomId],
   );
+  const syncUri = useMemo(
+    () => createBoardSyncUriResolver({ boardId, roomId, syncOrigin }),
+    [boardId, roomId, syncOrigin],
+  );
 
-  const store = useSync({
-    uri: async () => {
-      const response = await fetch("/api/board-sync/session-cookie", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ boardId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Collaborative session unavailable.");
-      }
-
-      return `${syncOrigin}/api/connect/${roomId}`;
-    },
-    assets,
-  });
+  const store = useSync({ uri: syncUri, assets });
 
   return (
     <div className="relative min-h-[560px] overflow-hidden rounded-[14px] border border-[var(--line-subtle)] bg-white">
@@ -54,14 +48,15 @@ function createAssetStore(syncOrigin: string, roomId: string): TLAssetStore {
       const id = uniqueId();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 80);
       const objectName = `${id}-${safeName}`;
-      const response = await fetch(`${syncOrigin}/api/uploads/${roomId}/${objectName}`, {
+      const uploadUrl = createBoardAssetUrl(syncOrigin, roomId, objectName);
+      const response = await fetch(uploadUrl, {
         method: "POST",
         body: file,
       });
       if (!response.ok) {
         throw new Error("Failed to upload board asset.");
       }
-      return { src: `${syncOrigin}/api/uploads/${roomId}/${objectName}` };
+      return { src: uploadUrl };
     },
     resolve(asset) {
       return asset.props.src;

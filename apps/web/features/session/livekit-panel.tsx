@@ -51,7 +51,7 @@ export function LiveKitPanel({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="drawi-panel overflow-hidden p-2">
-      <LiveKitRoom token={state.token} serverUrl={state.serverUrl} connect audio video>
+      <LiveKitRoom token={state.token} serverUrl={state.serverUrl} connect>
         <RoomAudioRenderer />
         <VideoConference />
       </LiveKitRoom>

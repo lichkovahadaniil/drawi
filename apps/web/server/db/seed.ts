@@ -1,10 +1,14 @@
 import { createAuthClient } from "better-auth/client";
-import { getServerEnv } from "../env/server";
 
 async function main() {
-  const env = getServerEnv();
+  const baseURL = process.env.BETTER_AUTH_URL ?? process.env.APP_URL ?? "http://localhost:3000";
   const authClient = createAuthClient({
-    baseURL: env.BETTER_AUTH_URL,
+    baseURL,
+    fetchOptions: {
+      headers: {
+        origin: baseURL,
+      },
+    },
   });
 
   for (const account of [

@@ -5,6 +5,10 @@ import { z } from "zod";
 import { getRequiredUser } from "@/server/auth/auth";
 import { getDb } from "@/server/db/client";
 import { boardAccess, boards } from "@/server/db/schema";
+import {
+  SYNC_ACCESS_COOKIE_NAME,
+  SYNC_ACCESS_COOKIE_TTL_SECONDS,
+} from "@/server/domain/sync-access";
 import { createSyncCookieValue } from "@/server/domain/sync-token";
 import { canIssueSyncAccess } from "@/server/domain/permissions";
 
@@ -55,11 +59,11 @@ export async function POST(request: Request) {
   });
 
   const cookieStore = await cookies();
-  cookieStore.set("drawi_sync_access", cookieValue, {
+  cookieStore.set(SYNC_ACCESS_COOKIE_NAME, cookieValue, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60,
+    maxAge: SYNC_ACCESS_COOKIE_TTL_SECONDS,
     path: "/",
   });
 

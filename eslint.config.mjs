@@ -21,6 +21,16 @@ export default tseslint.config(
   ...nextVitals,
   ...nextTs,
   {
+    settings: {
+      next: {
+        rootDir: ["apps/web/"],
+      },
+      react: {
+        version: "19.2",
+      },
+    },
+  },
+  {
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [

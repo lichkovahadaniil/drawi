@@ -16,6 +16,8 @@ test-results/
 .cache/
 .wrangler/state/
 .wrangler/tmp/
+**/.wrangler/state/
+**/.wrangler/tmp/
 *.tsbuildinfo
 
 # Local upstream references. Keep them readable, but do not track or build them as drawi source.
