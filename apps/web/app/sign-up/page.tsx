@@ -5,11 +5,13 @@ import { AuthForm } from "@/components/auth-form";
 export default function SignUpPage() {
   return (
     <main className="mx-auto grid min-h-screen max-w-md content-center gap-6 px-6">
-      <Link href="/" className="text-xl font-black">
+      <Link href="/" className="text-xl font-black tracking-tight text-[var(--ink-0)]">
         drawi
       </Link>
       <div>
-        <h1 className="text-3xl font-black">Create an account</h1>
+        <h1 className="text-3xl font-black tracking-tight text-[var(--ink-0)]">
+          Create an account
+        </h1>
         <p className="mt-2 text-[var(--ink-2)]">Start a shared visual lesson.</p>
       </div>
       <Suspense

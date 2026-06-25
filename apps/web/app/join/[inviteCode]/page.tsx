@@ -9,7 +9,9 @@ export default async function JoinPage({ params }: { params: Promise<{ inviteCod
   if (!session?.user) {
     return (
       <main className="mx-auto grid min-h-screen max-w-lg content-center gap-5 px-6">
-        <h1 className="text-3xl font-black">Join a drawi lesson</h1>
+        <h1 className="text-3xl font-black tracking-tight text-[var(--ink-0)]">
+          Join a drawi lesson
+        </h1>
         <p className="text-[var(--ink-2)]">
           Sign in or create an account before joining this private lesson.
         </p>
@@ -27,7 +29,7 @@ export default async function JoinPage({ params }: { params: Promise<{ inviteCod
 
   return (
     <main className="mx-auto grid min-h-screen max-w-lg content-center gap-5 px-6">
-      <h1 className="text-3xl font-black">Ready to join?</h1>
+      <h1 className="text-3xl font-black tracking-tight text-[var(--ink-0)]">Ready to join?</h1>
       <p className="text-[var(--ink-2)]">
         You will enter the live session with the shared board and optional camera/microphone.
       </p>

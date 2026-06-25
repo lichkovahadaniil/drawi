@@ -43,7 +43,7 @@ export function LiveKitPanel({ sessionId }: { sessionId: string }) {
 
   if (state.status === "failed") {
     return (
-      <div className="drawi-panel border-[var(--warning)] p-4 text-sm text-[var(--ink-1)]">
+      <div className="drawi-panel border-[var(--warning)] p-4 text-sm leading-6 text-[var(--ink-1)]">
         {state.message}
       </div>
     );

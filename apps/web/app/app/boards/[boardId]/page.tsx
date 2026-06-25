@@ -27,7 +27,9 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ink-3)]">
             {canEdit ? "Editable board" : "Read-only board"}
           </p>
-          <h1 className="mt-1 text-3xl font-black">{data.board.title}</h1>
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-[var(--ink-0)]">
+            {data.board.title}
+          </h1>
         </div>
         {canManage ? (
           <form action={createCheckpointAction.bind(null, data.board.id)}>
@@ -54,9 +56,9 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
                   key={checkpoint.id}
                   action={restoreCheckpointAsNewBoardAction.bind(null, checkpoint.id)}
                 >
-                  <div className="flex items-center justify-between gap-3 rounded-lg bg-white/70 p-3">
+                  <div className="flex items-center justify-between gap-3 border-t-2 border-dashed border-[var(--line-subtle)] py-3">
                     <div>
-                      <p className="font-bold">{checkpoint.label}</p>
+                      <p className="font-bold text-[var(--ink-0)]">{checkpoint.label}</p>
                       <p className="text-xs text-[var(--ink-2)]">{checkpoint.source}</p>
                     </div>
                     {canManage ? (

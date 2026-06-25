@@ -1,25 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --paper-0: #fbfaf6;
-  --paper-1: #f5f1e8;
-  --paper-2: #ebe5d9;
-  --ink-0: #171715;
-  --ink-1: #353530;
-  --ink-2: #6f6d65;
-  --ink-3: #9b978d;
-  --line-subtle: rgba(23, 23, 21, 0.1);
-  --line-strong: rgba(23, 23, 21, 0.22);
-  --primary: #3156d3;
-  --primary-hover: #2848b8;
-  --primary-soft: #e8edff;
-  --accent: #df6245;
-  --accent-hover: #c95036;
-  --accent-soft: #fbe9e3;
-  --success: #39765a;
-  --warning: #a66a22;
-  --danger: #b8423e;
-  --surface-raised: rgba(255, 255, 255, 0.82);
+  --paper-0: #fdfcf8;
+  --paper-1: #f7f5ee;
+  --paper-2: #eeebe1;
+  --paper-3: #e3ded0;
+  --canvas: #fffefa;
+  --ink-0: #20201d;
+  --ink-1: #3f3f39;
+  --ink-2: #737166;
+  --ink-3: #aaa69a;
+  --line-subtle: rgba(32, 32, 29, 0.16);
+  --line-strong: rgba(32, 32, 29, 0.72);
+  --primary: #20201d;
+  --primary-hover: #35352f;
+  --primary-soft: rgba(32, 32, 29, 0.07);
+  --accent: #20201d;
+  --accent-hover: #35352f;
+  --accent-soft: rgba(32, 32, 29, 0.06);
+  --success: #357457;
+  --warning: #986a2f;
+  --danger: #a9433f;
+  --surface-raised: rgba(255, 254, 250, 0.88);
+  --surface-muted: rgba(32, 32, 29, 0.04);
+  --sketch-shadow: 3px 4px 0 rgba(32, 32, 29, 0.07);
+  --sketch-shadow-hover: 4px 5px 0 rgba(32, 32, 29, 0.1);
 }
 
 @theme inline {
@@ -44,12 +49,9 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(rgba(23, 23, 21, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(23, 23, 21, 0.028) 1px, transparent 1px), var(--paper-0);
-  background-size:
-    28px 28px,
-    28px 28px,
-    auto;
+    radial-gradient(circle at 50% -18rem, rgba(32, 32, 29, 0.055), transparent 38rem),
+    var(--paper-0);
+  background-size: auto;
   color: var(--ink-0);
 }
 
@@ -69,8 +71,8 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--primary) 80%, white);
-  outline-offset: 3px;
+  outline: 2px dashed var(--ink-0);
+  outline-offset: 4px;
 }
 
 .drawi-shell {
@@ -79,62 +81,164 @@ button {
 
 .drawi-button {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 42px;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: var(--primary);
-  color: white;
-  padding: 0.625rem 0.9rem;
-  font-size: 0.925rem;
-  font-weight: 650;
+  border-radius: 9px 11px 8px 12px;
+  border: 2px solid var(--ink-0);
+  background: var(--canvas);
+  color: var(--ink-0);
+  padding: 0.58rem 0.95rem;
+  font-size: 0.9rem;
+  font-weight: 760;
+  letter-spacing: -0.01em;
+  box-shadow: var(--sketch-shadow);
   transition:
     background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
     transform 180ms ease,
     box-shadow 180ms ease;
 }
 
 .drawi-button:hover {
-  background: var(--primary-hover);
+  background: var(--paper-1);
+  box-shadow: var(--sketch-shadow-hover);
+  transform: translate(-1px, -1px);
 }
 
 .drawi-button:active {
-  transform: scale(0.96);
+  box-shadow: 1px 2px 0 rgba(32, 32, 29, 0.08);
+  transform: translate(1px, 1px) scale(0.98);
 }
 
 .drawi-button.secondary {
-  border-color: var(--line-subtle);
-  background: var(--surface-raised);
+  border-color: var(--ink-1);
+  background: transparent;
   color: var(--ink-0);
+  box-shadow: 2px 3px 0 rgba(32, 32, 29, 0.045);
+}
+
+.drawi-button.secondary:hover {
+  border-color: var(--ink-0);
+  background: var(--paper-1);
+  box-shadow: 3px 4px 0 rgba(32, 32, 29, 0.075);
+}
+
+.drawi-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .drawi-input {
   min-height: 42px;
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--line-subtle);
-  background: rgba(255, 255, 255, 0.78);
+  border-radius: 8px 10px 9px 7px;
+  border: 2px solid var(--ink-1);
+  background: rgba(255, 254, 250, 0.9);
   padding: 0.65rem 0.75rem;
   color: var(--ink-0);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.drawi-input::placeholder {
+  color: var(--ink-3);
+}
+
+.drawi-input:focus {
+  border-color: var(--ink-0);
+  background: var(--canvas);
+  box-shadow: 3px 4px 0 rgba(32, 32, 29, 0.06);
+  outline: none;
 }
 
 .drawi-label {
   display: grid;
   gap: 0.4rem;
   color: var(--ink-1);
-  font-size: 0.9rem;
-  font-weight: 620;
+  font-size: 0.88rem;
+  font-weight: 760;
 }
 
 .drawi-panel {
-  border: 1px solid var(--line-subtle);
-  border-radius: 14px;
+  border: 2px solid var(--ink-1);
+  border-radius: 12px 10px 13px 9px;
   background: var(--surface-raised);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 18px 48px rgba(23, 23, 21, 0.08);
+  box-shadow: var(--sketch-shadow);
+}
+
+.drawi-panel-link {
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.drawi-panel-link:hover {
+  background: var(--canvas);
+  box-shadow: var(--sketch-shadow-hover);
+  transform: translate(-1px, -1px);
+}
+
+.drawi-board-thumb {
+  background:
+    linear-gradient(rgba(32, 32, 29, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(32, 32, 29, 0.04) 1px, transparent 1px), var(--canvas);
+  background-size:
+    22px 22px,
+    22px 22px,
+    auto;
+  border: 2px solid var(--ink-1);
+  box-shadow: 2px 3px 0 rgba(32, 32, 29, 0.05);
+}
+
+.drawi-muted-link {
+  border-radius: 8px 10px 7px 9px;
+  padding: 0.5rem 0.65rem;
+  color: var(--ink-1);
+  font-size: 0.9rem;
+  font-weight: 620;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.drawi-muted-link:hover {
+  background: var(--surface-muted);
+  color: var(--ink-0);
+}
+
+.drawi-sketch-line {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ink-1);
+  opacity: 0.68;
+}
+
+.drawi-sketch-label {
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.drawi-tag {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border: 2px solid var(--ink-1);
+  border-radius: 999px 860px 940px 780px;
+  background: var(--canvas);
+  padding: 0.28rem 0.8rem;
+  color: var(--ink-0);
+  font-size: 0.86rem;
+  font-weight: 760;
+  box-shadow: 2px 2px 0 rgba(32, 32, 29, 0.04);
 }
 
 @media (prefers-reduced-motion: reduce) {

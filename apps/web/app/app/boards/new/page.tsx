@@ -4,7 +4,7 @@ export default function NewBoardPage() {
   return (
     <main className="mx-auto grid max-w-2xl gap-6">
       <div>
-        <h1 className="text-3xl font-black">Start lesson</h1>
+        <h1 className="text-3xl font-black tracking-tight text-[var(--ink-0)]">Start lesson</h1>
         <p className="mt-2 text-[var(--ink-2)]">
           Create a blank shared board and a live 1:1 session.
         </p>

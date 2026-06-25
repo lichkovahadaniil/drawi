@@ -50,8 +50,8 @@ export function PrivateNotesPanel({
   return (
     <section className="drawi-panel grid gap-3 p-4">
       <div>
-        <h2 className="font-black">My private notes</h2>
-        <p className="text-sm text-[var(--ink-2)]">{status}</p>
+        <h2 className="font-black text-[var(--ink-0)]">My private notes</h2>
+        <p className="mt-1 text-sm text-[var(--ink-2)]">{status}</p>
       </div>
       <textarea
         className="drawi-input min-h-52 resize-y leading-6"

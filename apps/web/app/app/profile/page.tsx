@@ -7,7 +7,7 @@ export default async function ProfilePage() {
   return (
     <main className="mx-auto grid max-w-2xl gap-6">
       <div>
-        <h1 className="text-3xl font-black">Profile</h1>
+        <h1 className="text-3xl font-black tracking-tight text-[var(--ink-0)]">Profile</h1>
         <p className="mt-2 text-[var(--ink-2)]">Minimal identity for live lessons.</p>
       </div>
       <form action={upsertProfileAction} className="drawi-panel grid gap-4 p-6">

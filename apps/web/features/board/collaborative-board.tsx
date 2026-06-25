@@ -31,11 +31,9 @@ export function CollaborativeBoard({
   const store = useSync({ uri: syncUri, assets });
 
   return (
-    <div className="relative min-h-[560px] overflow-hidden rounded-[14px] border border-[var(--line-subtle)] bg-white">
+    <div className="drawi-panel relative min-h-[560px] overflow-hidden bg-[var(--canvas)] p-1">
       {mode === "view" ? (
-        <div className="absolute left-3 top-3 z-10 rounded-full bg-[var(--paper-0)] px-3 py-1 text-xs font-bold text-[var(--ink-1)] shadow">
-          Read-only
-        </div>
+        <div className="drawi-tag absolute left-4 top-4 z-10 text-xs">Read-only</div>
       ) : null}
       <Tldraw store={store} />
     </div>

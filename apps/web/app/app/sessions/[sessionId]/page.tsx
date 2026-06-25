@@ -33,7 +33,9 @@ export default async function SessionPage({
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ink-3)]">
             {data.currentMembership.role}
           </p>
-          <h1 className="text-2xl font-black">{data.liveSession.title}</h1>
+          <h1 className="text-2xl font-black tracking-tight text-[var(--ink-0)]">
+            {data.liveSession.title}
+          </h1>
           {inviteUrl ? (
             <p className="mt-1 break-all text-sm text-[var(--ink-2)]">Invite: {inviteUrl}</p>
           ) : null}
@@ -61,12 +63,8 @@ export default async function SessionPage({
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <section className="grid gap-3">
           <div className="flex gap-2 text-sm font-bold">
-            <span className="rounded-full bg-[var(--primary-soft)] px-3 py-1 text-[var(--primary)]">
-              Board
-            </span>
-            <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]">
-              My notes
-            </span>
+            <span className="drawi-tag">Board</span>
+            <span className="drawi-tag">My notes</span>
           </div>
           <CollaborativeBoard
             boardId={data.board.id}
