@@ -1,5 +1,5 @@
 import "@livekit/components-styles";
-import "tldraw/tldraw.css";
+import "@excalidraw/excalidraw/index.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";

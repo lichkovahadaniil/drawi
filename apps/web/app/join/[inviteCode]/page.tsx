@@ -23,6 +23,9 @@ export default async function JoinPage({ params }: { params: Promise<{ inviteCod
             Create account
           </Link>
         </div>
+        <Link href="/join" className="drawi-muted-link w-fit">
+          Use a different code
+        </Link>
       </main>
     );
   }
@@ -38,6 +41,9 @@ export default async function JoinPage({ params }: { params: Promise<{ inviteCod
           Join lesson
         </button>
       </form>
+      <Link href="/join" className="drawi-muted-link w-fit">
+        Use a different code
+      </Link>
     </main>
   );
 }

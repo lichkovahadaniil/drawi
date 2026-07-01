@@ -26,8 +26,25 @@ export default async function SessionPage({
     ? `${process.env.APP_URL ?? "http://localhost:3000"}/join/${invite}`
     : null;
 
+  const sessionExitControl = isTutor ? (
+    <form action={endSessionAction.bind(null, data.liveSession.id)}>
+      <button
+        className="drawi-button secondary min-h-10 px-3 py-2 text-xs text-[var(--danger)]"
+        type="submit"
+      >
+        End session
+      </button>
+    </form>
+  ) : (
+    <form action={leaveSessionAction.bind(null, data.liveSession.id)}>
+      <button className="drawi-button secondary min-h-10 px-3 py-2 text-xs" type="submit">
+        Leave
+      </button>
+    </form>
+  );
+
   return (
-    <main className="grid min-h-[calc(100vh-120px)] gap-4">
+    <main className="grid min-h-[calc(100vh-120px)] grid-rows-[auto_minmax(0,1fr)_auto] gap-4">
       <header className="drawi-panel flex flex-wrap items-center justify-between gap-4 p-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ink-3)]">
@@ -44,39 +61,24 @@ export default async function SessionPage({
           <Link href={`/app/boards/${data.board.id}`} className="drawi-button secondary">
             Board details
           </Link>
-          {isTutor ? (
-            <form action={endSessionAction.bind(null, data.liveSession.id)}>
-              <button className="drawi-button" type="submit">
-                End session
-              </button>
-            </form>
-          ) : (
-            <form action={leaveSessionAction.bind(null, data.liveSession.id)}>
-              <button className="drawi-button secondary" type="submit">
-                Leave
-              </button>
-            </form>
-          )}
         </div>
       </header>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="grid gap-3">
-          <div className="flex gap-2 text-sm font-bold">
-            <span className="drawi-tag">Board</span>
-            <span className="drawi-tag">My notes</span>
-          </div>
+      <section className="min-h-0">
+        <div className="relative min-h-[560px]">
           <CollaborativeBoard
             boardId={data.board.id}
             roomId={data.board.roomId}
             mode={canEdit ? "edit" : "view"}
           />
-        </section>
-        <aside className="grid content-start gap-4">
-          <LiveKitPanel sessionId={data.liveSession.id} />
-          <PrivateNotesPanel boardId={data.board.id} initialBody={noteBody} />
-        </aside>
-      </div>
+          <PrivateNotesPanel boardId={data.board.id} initialBody={noteBody} placement="overlay" />
+        </div>
+      </section>
+
+      <section className="drawi-panel sticky bottom-3 z-30 grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <LiveKitPanel sessionId={data.liveSession.id} />
+        <div className="flex items-center justify-end gap-2">{sessionExitControl}</div>
+      </section>
     </main>
   );
 }

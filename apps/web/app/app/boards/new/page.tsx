@@ -1,3 +1,8 @@
+import {
+  BOARD_VISIBILITIES,
+  BOARD_VISIBILITY_LABELS,
+  DEFAULT_BOARD_VISIBILITY,
+} from "@/server/domain/board-visibility";
 import { startLessonAction } from "@/server/services/session-actions";
 
 export default function NewBoardPage() {
@@ -20,6 +25,19 @@ export default function NewBoardPage() {
             maxLength={120}
             placeholder="Calculus checkpoint"
           />
+        </label>
+        <label className="drawi-label">
+          Board privacy
+          <select className="drawi-input" name="visibility" defaultValue={DEFAULT_BOARD_VISIBILITY}>
+            {BOARD_VISIBILITIES.map((visibility) => (
+              <option key={visibility} value={visibility}>
+                {BOARD_VISIBILITY_LABELS[visibility]}
+              </option>
+            ))}
+          </select>
+          <span className="text-sm font-medium leading-6 text-[var(--ink-2)]">
+            You can change privacy later from the board page.
+          </span>
         </label>
         <button className="drawi-button" type="submit">
           Create board and invite

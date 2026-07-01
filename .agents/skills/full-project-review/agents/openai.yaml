@@ -1,0 +1,4 @@
+interface:
+  display_name: "Full Project Review"
+  short_description: "Run integration-grade code reviews"
+  default_prompt: "Use $full-project-review to review a branch before merging it."

@@ -1,30 +1,76 @@
 @import "tailwindcss";
 
-:root {
-  --paper-0: #fdfcf8;
-  --paper-1: #f7f5ee;
-  --paper-2: #eeebe1;
-  --paper-3: #e3ded0;
-  --canvas: #fffefa;
-  --ink-0: #20201d;
-  --ink-1: #3f3f39;
-  --ink-2: #737166;
-  --ink-3: #aaa69a;
-  --line-subtle: rgba(32, 32, 29, 0.16);
-  --line-strong: rgba(32, 32, 29, 0.72);
-  --primary: #20201d;
-  --primary-hover: #35352f;
-  --primary-soft: rgba(32, 32, 29, 0.07);
-  --accent: #20201d;
-  --accent-hover: #35352f;
-  --accent-soft: rgba(32, 32, 29, 0.06);
-  --success: #357457;
-  --warning: #986a2f;
-  --danger: #a9433f;
-  --surface-raised: rgba(255, 254, 250, 0.88);
-  --surface-muted: rgba(32, 32, 29, 0.04);
-  --sketch-shadow: 3px 4px 0 rgba(32, 32, 29, 0.07);
-  --sketch-shadow-hover: 4px 5px 0 rgba(32, 32, 29, 0.1);
+:root,
+html[data-drawi-theme="day"] {
+  color-scheme: light;
+  --paper-0: #f6f5ef;
+  --paper-1: #ffffff;
+  --paper-2: #ece8dd;
+  --paper-3: #d9d1c2;
+  --canvas: #fffdf8;
+  --ink-0: #1e211f;
+  --ink-1: #3c403d;
+  --ink-2: #6f726d;
+  --ink-3: #9b968d;
+  --line-subtle: rgba(30, 33, 31, 0.13);
+  --line-strong: rgba(30, 33, 31, 0.68);
+  --primary: #1e211f;
+  --primary-hover: #303630;
+  --primary-soft: rgba(30, 33, 31, 0.07);
+  --accent: #316bd8;
+  --accent-hover: #2459bc;
+  --accent-soft: rgba(49, 107, 216, 0.1);
+  --warm: #f26d4f;
+  --warm-soft: rgba(242, 109, 79, 0.12);
+  --mint: #1f8f78;
+  --mint-soft: rgba(31, 143, 120, 0.11);
+  --success: #2e7d62;
+  --warning: #9d6c22;
+  --danger: #b8423d;
+  --surface-raised: rgba(255, 255, 255, 0.88);
+  --surface-muted: rgba(30, 33, 31, 0.055);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --shell-grid: rgba(30, 33, 31, 0.045);
+  --shadow-border:
+    0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.08),
+    0 10px 28px -24px rgba(0, 0, 0, 0.38);
+  --shadow-border-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.08), 0 8px 18px -18px rgba(0, 0, 0, 0.34),
+    0 18px 36px -30px rgba(0, 0, 0, 0.4);
+}
+
+html[data-drawi-theme="night"] {
+  color-scheme: dark;
+  --paper-0: #11110f;
+  --paper-1: #171816;
+  --paper-2: #20211e;
+  --paper-3: #303028;
+  --canvas: #1b1c19;
+  --ink-0: #f5efe5;
+  --ink-1: #dfd7c9;
+  --ink-2: #a7a196;
+  --ink-3: #747064;
+  --line-subtle: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(245, 239, 229, 0.72);
+  --primary: #f5efe5;
+  --primary-hover: #ffffff;
+  --primary-soft: rgba(245, 239, 229, 0.09);
+  --accent: #8db7ff;
+  --accent-hover: #b2ceff;
+  --accent-soft: rgba(141, 183, 255, 0.14);
+  --warm: #ff9a72;
+  --warm-soft: rgba(255, 154, 114, 0.16);
+  --mint: #7bd8c1;
+  --mint-soft: rgba(123, 216, 193, 0.14);
+  --success: #84d2a2;
+  --warning: #f2c36f;
+  --danger: #ff8f88;
+  --surface-raised: rgba(30, 31, 28, 0.88);
+  --surface-muted: rgba(245, 239, 229, 0.065);
+  --surface-strong: rgba(27, 28, 25, 0.96);
+  --shell-grid: rgba(255, 255, 255, 0.045);
+  --shadow-border: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-border-hover: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 18px 38px -28px rgba(0, 0, 0, 0.9);
 }
 
 @theme inline {
@@ -43,15 +89,13 @@ html {
   background: var(--paper-0);
   color: var(--ink-0);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 50% -18rem, rgba(32, 32, 29, 0.055), transparent 38rem),
-    var(--paper-0);
-  background-size: auto;
+  background: var(--paper-0);
   color: var(--ink-0);
 }
 
@@ -62,6 +106,7 @@ a {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -70,60 +115,222 @@ button {
   min-height: 40px;
 }
 
+img {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+html[data-drawi-theme="night"] img {
+  outline-color: rgba(255, 255, 255, 0.1);
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
 :focus-visible {
-  outline: 2px dashed var(--ink-0);
-  outline-offset: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .drawi-shell {
   min-height: 100vh;
 }
 
+.drawi-app-root {
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, var(--shell-grid) 1px, transparent 1px),
+    linear-gradient(var(--shell-grid) 1px, transparent 1px), var(--paper-0);
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
+}
+
+.drawi-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--line-subtle);
+  background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.drawi-topbar-inner {
+  display: grid;
+  width: min(100%, 86rem);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0 auto;
+  padding: 0.65rem 1rem;
+}
+
+.drawi-brand {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 8px;
+  padding: 0.25rem 0.35rem;
+  color: var(--ink-0);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.drawi-brand-mark {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--warm), var(--accent) 58%, var(--mint));
+  color: #ffffff;
+  box-shadow: var(--shadow-border);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.drawi-primary-nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.2rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.drawi-primary-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.drawi-nav-link,
+.drawi-muted-link,
+.drawi-icon-button {
+  transition-property: background-color, color, box-shadow, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.drawi-nav-link {
+  display: inline-flex;
+  min-height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: var(--ink-2);
+  font-size: 0.91rem;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.drawi-nav-link:hover,
+.drawi-nav-link[data-active="true"] {
+  background: var(--primary-soft);
+  color: var(--ink-0);
+}
+
+.drawi-shell-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.drawi-user-chip {
+  max-width: 14rem;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  padding: 0.5rem 0.75rem;
+  color: var(--ink-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.drawi-icon-button {
+  display: inline-flex;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--ink-1);
+}
+
+.drawi-icon-button:hover {
+  background: var(--primary-soft);
+  color: var(--ink-0);
+}
+
+.drawi-icon-button:active,
+.drawi-nav-link:active,
+.drawi-muted-link:active {
+  scale: 0.96;
+}
+
+.drawi-content {
+  width: min(100%, 86rem);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
 .drawi-button {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 9px 11px 8px 12px;
-  border: 2px solid var(--ink-0);
-  background: var(--canvas);
-  color: var(--ink-0);
-  padding: 0.58rem 0.95rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--paper-1);
+  padding: 0.58rem 0.9rem;
   font-size: 0.9rem;
-  font-weight: 760;
-  letter-spacing: -0.01em;
-  box-shadow: var(--sketch-shadow);
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease,
-    transform 180ms ease,
-    box-shadow 180ms ease;
+  font-weight: 780;
+  letter-spacing: 0;
+  box-shadow: var(--shadow-border);
+  transition-property: background-color, color, box-shadow, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
 }
 
 .drawi-button:hover {
-  background: var(--paper-1);
-  box-shadow: var(--sketch-shadow-hover);
-  transform: translate(-1px, -1px);
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-border-hover);
 }
 
 .drawi-button:active {
-  box-shadow: 1px 2px 0 rgba(32, 32, 29, 0.08);
-  transform: translate(1px, 1px) scale(0.98);
+  scale: 0.96;
 }
 
 .drawi-button.secondary {
-  border-color: var(--ink-1);
-  background: transparent;
+  background: var(--surface-strong);
   color: var(--ink-0);
-  box-shadow: 2px 3px 0 rgba(32, 32, 29, 0.045);
 }
 
 .drawi-button.secondary:hover {
-  border-color: var(--ink-0);
-  background: var(--paper-1);
-  box-shadow: 3px 4px 0 rgba(32, 32, 29, 0.075);
+  background: var(--primary-soft);
+  color: var(--ink-0);
 }
 
 .drawi-button:disabled {
@@ -132,17 +339,16 @@ button {
 }
 
 .drawi-input {
-  min-height: 42px;
+  min-height: 40px;
   width: 100%;
-  border-radius: 8px 10px 9px 7px;
-  border: 2px solid var(--ink-1);
-  background: rgba(255, 254, 250, 0.9);
+  border: 1px solid var(--line-subtle);
+  border-radius: 8px;
+  background: var(--surface-strong);
   padding: 0.65rem 0.75rem;
   color: var(--ink-0);
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
 }
 
 .drawi-input::placeholder {
@@ -150,61 +356,64 @@ button {
 }
 
 .drawi-input:focus {
-  border-color: var(--ink-0);
+  border-color: var(--accent);
   background: var(--canvas);
-  box-shadow: 3px 4px 0 rgba(32, 32, 29, 0.06);
+  box-shadow: 0 0 0 3px var(--accent-soft);
   outline: none;
 }
 
 .drawi-label {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.42rem;
   color: var(--ink-1);
   font-size: 0.88rem;
   font-weight: 760;
 }
 
 .drawi-panel {
-  border: 2px solid var(--ink-1);
-  border-radius: 12px 10px 13px 9px;
+  border-radius: 8px;
   background: var(--surface-raised);
-  box-shadow: var(--sketch-shadow);
+  box-shadow: var(--shadow-border);
 }
 
 .drawi-panel-link {
-  transition:
-    background-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+  transition-property: background-color, box-shadow, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
 }
 
 .drawi-panel-link:hover {
-  background: var(--canvas);
-  box-shadow: var(--sketch-shadow-hover);
-  transform: translate(-1px, -1px);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-border-hover);
+}
+
+.drawi-panel-link:active {
+  scale: 0.98;
 }
 
 .drawi-board-thumb {
   background:
-    linear-gradient(rgba(32, 32, 29, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(32, 32, 29, 0.04) 1px, transparent 1px), var(--canvas);
+    linear-gradient(var(--shell-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--shell-grid) 1px, transparent 1px), var(--canvas);
   background-size:
     22px 22px,
     22px 22px,
     auto;
-  border: 2px solid var(--ink-1);
-  box-shadow: 2px 3px 0 rgba(32, 32, 29, 0.05);
+  border-radius: 6px;
+  box-shadow: var(--shadow-border);
 }
 
 .drawi-muted-link {
-  border-radius: 8px 10px 7px 9px;
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
   padding: 0.5rem 0.65rem;
   color: var(--ink-1);
   font-size: 0.9rem;
-  font-weight: 620;
-  transition:
-    background-color 160ms ease,
-    color 160ms ease;
+  font-weight: 680;
+  letter-spacing: 0;
 }
 
 .drawi-muted-link:hover {
@@ -219,11 +428,12 @@ button {
   opacity: 0.68;
 }
 
-.drawi-sketch-label {
-  color: var(--ink-2);
-  font-size: 0.78rem;
-  font-weight: 780;
-  letter-spacing: 0.08em;
+.drawi-sketch-label,
+.drawi-kicker {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -231,14 +441,161 @@ button {
   display: inline-flex;
   min-height: 32px;
   align-items: center;
-  border: 2px solid var(--ink-1);
-  border-radius: 999px 860px 940px 780px;
-  background: var(--canvas);
-  padding: 0.28rem 0.8rem;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  padding: 0.28rem 0.75rem;
   color: var(--ink-0);
   font-size: 0.86rem;
   font-weight: 760;
-  box-shadow: 2px 2px 0 rgba(32, 32, 29, 0.04);
+  box-shadow: var(--shadow-border);
+}
+
+.drawi-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.drawi-page-header h1,
+.drawi-section-heading h2,
+.drawi-theme-panel h2 {
+  color: var(--ink-0);
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.drawi-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.drawi-dashboard-hero {
+  background:
+    linear-gradient(135deg, var(--warm-soft), transparent 34%),
+    linear-gradient(315deg, var(--mint-soft), transparent 32%), var(--surface-raised);
+}
+
+.drawi-compact-panel {
+  border-radius: 8px;
+  background: var(--surface-strong);
+  padding: 1rem;
+  box-shadow: var(--shadow-border);
+}
+
+.drawi-theme-panel {
+  display: grid;
+  gap: 1rem;
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, var(--accent-soft), transparent 38%),
+    linear-gradient(315deg, var(--warm-soft), transparent 36%), var(--surface-strong);
+  padding: 1rem;
+}
+
+.drawi-theme-panel p {
+  margin-top: 0.25rem;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+}
+
+.drawi-theme-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 0.35rem;
+}
+
+.drawi-theme-toggle-option {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font-weight: 800;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition-property: background-color, color, box-shadow, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.drawi-theme-toggle-option:hover {
+  color: var(--ink-0);
+}
+
+.drawi-theme-toggle-option[data-selected="true"] {
+  background: var(--surface-strong);
+  color: var(--ink-0);
+  box-shadow: var(--shadow-border);
+}
+
+.drawi-theme-toggle-option:active {
+  scale: 0.96;
+}
+
+@media (max-width: 760px) {
+  .drawi-topbar-inner {
+    grid-template-columns: 1fr auto;
+    gap: 0.55rem;
+    padding: 0.55rem 0.75rem 0.65rem;
+  }
+
+  .drawi-primary-nav {
+    grid-column: 1 / -1;
+    order: 3;
+    width: 100%;
+    padding-bottom: 0.05rem;
+  }
+
+  .drawi-brand {
+    min-width: 0;
+  }
+
+  .drawi-shell-actions {
+    gap: 0.35rem;
+  }
+
+  .drawi-user-chip {
+    display: none;
+  }
+
+  .drawi-content {
+    padding: 0.85rem;
+  }
+
+  .drawi-section-heading,
+  .drawi-page-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .drawi-theme-toggle {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .drawi-brand span:last-child {
+    display: none;
+  }
+
+  .drawi-nav-link {
+    padding-inline: 0.62rem;
+  }
+
+  .drawi-shell-actions .drawi-button span {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

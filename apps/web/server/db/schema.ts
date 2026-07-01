@@ -12,11 +12,18 @@ import {
 
 export const boardPermissionEnum = pgEnum("board_permission", ["manage", "edit", "view"]);
 export const boardStatusEnum = pgEnum("board_status", ["active", "archived", "deleted"]);
+export const boardVisibilityEnum = pgEnum("board_visibility", ["private", "friends", "public"]);
+export const channelVisibilityEnum = pgEnum("channel_visibility", ["private", "friends", "public"]);
 export const sessionRoleEnum = pgEnum("session_role", ["tutor", "student"]);
 export const liveSessionStatusEnum = pgEnum("live_session_status", ["live", "ended"]);
 export const libraryRelationshipEnum = pgEnum("library_relationship", ["created", "learned"]);
 export const checkpointSourceEnum = pgEnum("checkpoint_source", ["manual", "session_end"]);
 export const inviteStatusEnum = pgEnum("invite_status", ["active", "expired", "revoked"]);
+export const friendshipStatusEnum = pgEnum("friendship_status", [
+  "pending",
+  "accepted",
+  "declined",
+]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -93,6 +100,8 @@ export const profiles = pgTable(
     bio: text("bio"),
     avatarUrl: text("avatar_url"),
     roleLabel: text("role_label").notNull().default("Learner"),
+    teachingEnabled: boolean("teaching_enabled").notNull().default(false),
+    channelVisibility: channelVisibilityEnum("channel_visibility").notNull().default("public"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -112,6 +121,7 @@ export const boards = pgTable(
     title: text("title").notNull(),
     roomId: text("room_id").notNull(),
     status: boardStatusEnum("status").notNull().default("active"),
+    visibility: boardVisibilityEnum("visibility").notNull().default("private"),
     sourceBoardId: uuid("source_board_id"),
     sourceCheckpointId: uuid("source_checkpoint_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -119,7 +129,34 @@ export const boards = pgTable(
   },
   (table) => ({
     ownerIdx: index("boards_owner_id_idx").on(table.ownerId),
+    visibilityIdx: index("boards_visibility_idx").on(table.visibility),
     roomIdx: uniqueIndex("boards_room_id_unique").on(table.roomId),
+  }),
+);
+
+export const friendships = pgTable(
+  "friendships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requesterId: text("requester_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    addresseeId: text("addressee_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: friendshipStatusEnum("status").notNull().default("pending"),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    requesterIdx: index("friendships_requester_id_idx").on(table.requesterId),
+    addresseeIdx: index("friendships_addressee_id_idx").on(table.addresseeId),
+    statusIdx: index("friendships_status_idx").on(table.status),
+    pairUnique: uniqueIndex("friendships_requester_addressee_unique").on(
+      table.requesterId,
+      table.addresseeId,
+    ),
   }),
 );
 
@@ -286,7 +323,10 @@ export const auditEvents = pgTable("audit_events", {
 });
 
 export type BoardPermission = (typeof boardPermissionEnum.enumValues)[number];
+export type BoardVisibility = (typeof boardVisibilityEnum.enumValues)[number];
+export type ChannelVisibility = (typeof channelVisibilityEnum.enumValues)[number];
 export type SessionRole = (typeof sessionRoleEnum.enumValues)[number];
 export type LiveSessionStatus = (typeof liveSessionStatusEnum.enumValues)[number];
 export type LibraryRelationship = (typeof libraryRelationshipEnum.enumValues)[number];
 export type CheckpointSource = (typeof checkpointSourceEnum.enumValues)[number];
+export type FriendshipStatus = (typeof friendshipStatusEnum.enumValues)[number];

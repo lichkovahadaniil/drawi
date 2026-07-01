@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function LandingPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-6">
-      <nav className="flex items-center justify-between border-b border-[var(--line-subtle)] pb-5">
+      <nav className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--line-subtle)] pb-5">
         <Link
           href="/"
           className="text-xl font-black tracking-tight text-[var(--ink-0)]"
@@ -11,11 +11,14 @@ export default function LandingPage() {
         >
           drawi
         </Link>
-        <div className="flex items-center gap-3">
-          <Link href="/sign-in" className="drawi-button secondary">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+          <Link href="/join" className="drawi-button secondary whitespace-nowrap">
+            Join with code
+          </Link>
+          <Link href="/sign-in" className="drawi-button secondary whitespace-nowrap">
             Sign in
           </Link>
-          <Link href="/sign-up" className="drawi-button">
+          <Link href="/sign-up" className="drawi-button whitespace-nowrap">
             Start lesson
           </Link>
         </div>
@@ -36,6 +39,9 @@ export default function LandingPage() {
             <Link href="/sign-up" className="drawi-button">
               Start a lesson
             </Link>
+            <Link href="/join" className="drawi-button secondary">
+              Join with a code
+            </Link>
             <Link href="/sign-in" className="drawi-button secondary">
               I already have an account
             </Link>
@@ -43,7 +49,7 @@ export default function LandingPage() {
           <dl className="mt-12 grid max-w-xl grid-cols-3 gap-3 text-sm text-[var(--ink-2)]">
             <div className="border-t border-[var(--line-subtle)] pt-3">
               <dt className="font-bold text-[var(--ink-0)]">Board first</dt>
-              <dd className="mt-1">Shared tldraw canvas</dd>
+              <dd className="mt-1">Shared Excalidraw canvas</dd>
             </div>
             <div className="border-t border-[var(--line-subtle)] pt-3">
               <dt className="font-bold text-[var(--ink-0)]">Private</dt>

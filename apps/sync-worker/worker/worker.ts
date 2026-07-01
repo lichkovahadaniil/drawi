@@ -3,8 +3,7 @@ import { AutoRouter, error, IRequest } from "itty-router";
 import { handleAssetDownload, handleAssetUpload } from "./assetUploads";
 import { verifySyncAccess } from "./auth";
 
-// make sure our sync durable object is made available to cloudflare
-export { TldrawDurableObject } from "./TldrawDurableObject";
+export { DrawiBoardDurableObject } from "./DrawiBoardDurableObject";
 
 // we use itty-router (https://itty.dev/) to handle routing. in this example we turn on CORS because
 // we're hosting the worker separately to the client. you should restrict this to your own domain.
@@ -21,8 +20,8 @@ const router = AutoRouter<IRequest, [env: Env, ctx: ExecutionContext]>({
     const claims = await verifySyncAccess(request, env, roomId);
     if (!claims) return error(403, "Forbidden");
 
-    const id = env.TLDRAW_DURABLE_OBJECT.idFromName(roomId);
-    const room = env.TLDRAW_DURABLE_OBJECT.get(id);
+    const id = env.DRAWI_BOARD_DURABLE_OBJECT.idFromName(roomId);
+    const room = env.DRAWI_BOARD_DURABLE_OBJECT.get(id);
     const headers = new Headers(request.headers);
     headers.set("x-drawi-user-id", claims.userId);
     headers.set("x-drawi-permission", claims.permission);

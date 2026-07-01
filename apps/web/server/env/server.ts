@@ -11,11 +11,9 @@ const envSchema = z.object({
   NEXT_PUBLIC_LIVEKIT_URL: z.string().min(1),
   LIVEKIT_API_KEY: z.string().min(1),
   LIVEKIT_API_SECRET: z.string().min(1),
-  NEXT_PUBLIC_TLDRAW_SYNC_URL: z.url(),
+  NEXT_PUBLIC_DRAWI_SYNC_URL: z.url(),
   SYNC_COOKIE_SECRET: z.string().min(24),
   SYNC_WORKER_ORIGIN: z.url().default("http://localhost:8787"),
-  TLDRAW_LICENSE_REQUIRED_IN_PRODUCTION: z.coerce.boolean().default(true),
-  NEXT_PUBLIC_TLDRAW_LICENSE_KEY: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof envSchema>;
@@ -27,11 +25,4 @@ export function getServerEnv() {
     cachedEnv = envSchema.parse(process.env);
   }
   return cachedEnv;
-}
-
-export function assertProductionTldrawLicense() {
-  const env = getServerEnv();
-  if (env.TLDRAW_LICENSE_REQUIRED_IN_PRODUCTION && !env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY) {
-    throw new Error("NEXT_PUBLIC_TLDRAW_LICENSE_KEY is required for production deployment.");
-  }
 }

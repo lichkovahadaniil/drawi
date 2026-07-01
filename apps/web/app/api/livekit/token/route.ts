@@ -1,6 +1,7 @@
 import { AccessToken } from "livekit-server-sdk";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { createDrawiLiveKitGrant } from "@/features/session/livekit-token";
 import { getRequiredUser } from "@/server/auth/auth";
 import { getDb } from "@/server/db/client";
 import { liveSessions, profiles, sessionMemberships } from "@/server/db/schema";
@@ -55,13 +56,7 @@ export async function GET(request: Request) {
     }),
   });
 
-  token.addGrant({
-    room: liveSession.liveKitRoomName,
-    roomJoin: true,
-    canPublish: true,
-    canSubscribe: true,
-    canPublishData: false,
-  });
+  token.addGrant(createDrawiLiveKitGrant(liveSession.liveKitRoomName));
 
   return NextResponse.json({
     token: await token.toJwt(),

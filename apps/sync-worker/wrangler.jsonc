@@ -11,20 +11,20 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "TLDRAW_DURABLE_OBJECT",
-        "class_name": "TldrawDurableObject",
+        "name": "DRAWI_BOARD_DURABLE_OBJECT",
+        "class_name": "DrawiBoardDurableObject",
       },
     ],
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["TldrawDurableObject"],
+      "new_sqlite_classes": ["DrawiBoardDurableObject"],
     },
   ],
   "r2_buckets": [
     {
-      "binding": "TLDRAW_BUCKET",
+      "binding": "DRAWI_BOARD_BUCKET",
       "bucket_name": "drawi-local-board-assets",
       "preview_bucket_name": "drawi-local-board-assets-preview",
     },

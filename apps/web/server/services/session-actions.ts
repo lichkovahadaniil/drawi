@@ -13,10 +13,17 @@ import {
   invites,
   libraryItems,
   liveSessions,
+  profiles,
   sessionMemberships,
 } from "../db/schema";
-import { canManageBoard } from "../domain/permissions";
-import { createInviteCode, hashInviteCode, isInviteExpired } from "../domain/invites";
+import { parseBoardVisibilityInput } from "../domain/board-visibility";
+import { canDeleteBoard, canManageBoard } from "../domain/permissions";
+import {
+  createInviteCode,
+  hashInviteCode,
+  isInviteExpired,
+  normalizeInviteCodeInput,
+} from "../domain/invites";
 
 export async function startLessonAction(formData: FormData) {
   const user = await getRequiredUser();
@@ -25,6 +32,7 @@ export async function startLessonAction(formData: FormData) {
   const title = String(formData.get("title") ?? "Untitled lesson")
     .trim()
     .slice(0, 120);
+  const visibility = parseBoardVisibilityInput(formData.get("visibility"));
   const db = getDb();
   const inviteCode = createInviteCode();
 
@@ -35,6 +43,7 @@ export async function startLessonAction(formData: FormData) {
         ownerId: user.id,
         title,
         roomId: crypto.randomUUID(),
+        visibility,
       })
       .returning();
     if (!board) throw new Error("Failed to create board.");
@@ -148,6 +157,15 @@ export async function joinInviteAction(inviteCode: string) {
   redirect(`/app/sessions/${liveSession.id}`);
 }
 
+export async function joinByCodeAction(formData: FormData) {
+  const inviteCode = normalizeInviteCodeInput(String(formData.get("inviteCode") ?? ""));
+  if (!inviteCode) {
+    throw new Error("Enter a lesson code.");
+  }
+
+  redirect(`/join/${encodeURIComponent(inviteCode)}`);
+}
+
 export async function endSessionAction(sessionId: string) {
   const user = await getRequiredUser();
   if (!user) redirect("/sign-in");
@@ -204,6 +222,87 @@ export async function endSessionAction(sessionId: string) {
 
   revalidatePath("/app");
   redirect(`/app/boards/${liveSession.boardId}`);
+}
+
+export async function deleteBoardAction(boardId: string) {
+  const user = await getRequiredUser();
+  if (!user) redirect("/sign-in");
+
+  const db = getDb();
+  const [board] = await db.select().from(boards).where(eq(boards.id, boardId)).limit(1);
+  if (!board) throw new Error("Board not found.");
+
+  const accessRows = await db
+    .select()
+    .from(boardAccess)
+    .where(and(eq(boardAccess.boardId, board.id), eq(boardAccess.userId, user.id)));
+
+  if (!canDeleteBoard(user, board, accessRows)) {
+    throw new Error("Forbidden.");
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(boards)
+      .set({ status: "deleted", updatedAt: new Date() })
+      .where(eq(boards.id, board.id));
+
+    await tx.insert(auditEvents).values({
+      actorUserId: user.id,
+      action: "board.deleted",
+      entityType: "board",
+      entityId: board.id,
+    });
+  });
+
+  revalidatePath("/app");
+  revalidatePath("/app/boards");
+  redirect("/app/boards");
+}
+
+export async function updateBoardVisibilityAction(boardId: string, formData: FormData) {
+  const user = await getRequiredUser();
+  if (!user) redirect("/sign-in");
+
+  const visibility = parseBoardVisibilityInput(formData.get("visibility"));
+  const db = getDb();
+  const [board] = await db.select().from(boards).where(eq(boards.id, boardId)).limit(1);
+  if (!board) throw new Error("Board not found.");
+
+  const accessRows = await db
+    .select()
+    .from(boardAccess)
+    .where(and(eq(boardAccess.boardId, board.id), eq(boardAccess.userId, user.id)));
+
+  if (!canManageBoard(user, board, accessRows)) {
+    throw new Error("Forbidden.");
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(boards)
+      .set({ visibility, updatedAt: new Date() })
+      .where(eq(boards.id, board.id));
+
+    await tx.insert(auditEvents).values({
+      actorUserId: user.id,
+      action: "board.visibility_updated",
+      entityType: "board",
+      entityId: board.id,
+    });
+  });
+
+  revalidatePath("/app");
+  revalidatePath("/app/boards");
+  revalidatePath(`/app/boards/${board.id}`);
+  const [ownerProfile] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.userId, board.ownerId))
+    .limit(1);
+  if (ownerProfile) {
+    revalidatePath(`/u/${ownerProfile.handle}`);
+  }
 }
 
 export async function leaveSessionAction(sessionId: string) {

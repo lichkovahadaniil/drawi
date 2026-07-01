@@ -20,6 +20,24 @@ export function canViewBoard(
   return Boolean(activeAccessFor(actor, access));
 }
 
+export function canOpenBoardByLink(board: BoardAuthRecord) {
+  return board.status === "active" && board.visibility === "public";
+}
+
+export function canListBoardOnPublicProfile(board: BoardAuthRecord) {
+  return board.status === "active" && board.visibility === "public";
+}
+
+export function canListBoardInLibrary(
+  actor: Actor,
+  board: BoardAuthRecord,
+  access: BoardAccessRecord[] = [],
+) {
+  if (board.status === "deleted") return false;
+  if (board.ownerId === actor.id) return true;
+  return Boolean(activeAccessFor(actor, access));
+}
+
 export function canEditBoard(
   actor: Actor,
   board: BoardAuthRecord,
@@ -39,6 +57,14 @@ export function canManageBoard(
   if (board.status === "deleted") return false;
   if (board.ownerId === actor.id) return true;
   return activeAccessFor(actor, access)?.permission === "manage";
+}
+
+export function canDeleteBoard(
+  actor: Actor,
+  board: BoardAuthRecord,
+  access: BoardAccessRecord[] = [],
+) {
+  return canManageBoard(actor, board, access);
 }
 
 export function canJoinSession(
@@ -63,7 +89,9 @@ export function canIssueSyncAccess(
   board: BoardAuthRecord,
   access: BoardAccessRecord[] = [],
 ) {
-  return canViewBoard(actor, board, access);
+  if (board.status === "deleted") return false;
+  if (board.ownerId === actor.id) return true;
+  return Boolean(activeAccessFor(actor, access));
 }
 
 export function canReadStudentNote(actor: Actor, studentId: string) {
@@ -72,6 +100,14 @@ export function canReadStudentNote(actor: Actor, studentId: string) {
 
 export function canWriteStudentNote(actor: Actor, studentId: string) {
   return actor.id === studentId;
+}
+
+export function canUsePrivateNotes(
+  actor: Actor,
+  board: BoardAuthRecord,
+  access: BoardAccessRecord[] = [],
+) {
+  return canViewBoard(actor, board, access);
 }
 
 export function canRestoreCheckpointAsNewBoard(

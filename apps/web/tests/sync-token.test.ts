@@ -20,7 +20,7 @@ function stubServerEnv() {
   vi.stubEnv("NEXT_PUBLIC_LIVEKIT_URL", "ws://localhost:7880");
   vi.stubEnv("LIVEKIT_API_KEY", "devkey");
   vi.stubEnv("LIVEKIT_API_SECRET", "secret");
-  vi.stubEnv("NEXT_PUBLIC_TLDRAW_SYNC_URL", "http://localhost:8787");
+  vi.stubEnv("NEXT_PUBLIC_DRAWI_SYNC_URL", "http://localhost:8787");
   vi.stubEnv("SYNC_COOKIE_SECRET", "sync-cookie-secret-for-tests");
   vi.stubEnv("SYNC_WORKER_ORIGIN", "http://localhost:8787");
 }
