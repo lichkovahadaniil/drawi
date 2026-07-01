@@ -19,33 +19,20 @@ Baseline commit: 6a54d726f566437eacdaa1ec0b11a76d61ca29d9
 
 ## Current system state
 
-- Web app boundary: `apps/web` is a Next.js App Router app with Better Auth, Drizzle/Postgres, LiveKit token issuance, board/session/profile server actions, and tldraw client rendering.
-- Sync boundary: `apps/sync-worker` is a Cloudflare Worker + Durable Object + R2 boundary adapted from the tldraw Cloudflare sync template. It handles WebSocket room sync and board asset uploads/downloads.
+- Web app boundary: `apps/web` is a Next.js App Router app with Better Auth, Drizzle/Postgres, LiveKit token issuance, board/session/profile server actions, and `@excalidraw/excalidraw` client rendering.
+- Sync boundary: `apps/sync-worker` is a Cloudflare Worker + Durable Object + R2 boundary running Drawi-owned Excalidraw scene sync. It handles WebSocket room sync and board asset uploads/downloads.
 - Authorization model: Better Auth email/password sessions protect `/app/**`. Server actions use `getRequiredUser()`. LiveKit tokens require live session membership. Sync access requires a short-lived HttpOnly cookie issued by the web app.
 - Board access model: board owners implicitly manage their boards. `board_access` rows grant `manage`, `edit`, or `view`; revoked rows have `revoked_at`. Joined students receive `edit` board access.
 - Board deletion model: board deletion is currently a soft delete through `boards.status = deleted`; deleted boards are hidden from dashboard/library queries and remain physically present in Postgres, sync storage, and R2.
 - Join-code entry: `/join` accepts a pasted invite code or full `/join/[inviteCode]` URL, normalizes it, and redirects into the existing invite flow. `/join/[inviteCode]` remains compatible.
-- Board state format: live board state is currently tldraw records persisted inside the Durable Object SQLite sync storage. Postgres stores board metadata, room id, access, sessions, library items, notes, and checkpoint metadata.
+- Board state format: live board state is currently Excalidraw scene JSON persisted inside the Drawi Durable Object SQLite sync storage. Postgres stores board metadata, room id, access, sessions, library items, notes, and checkpoint metadata.
 - Sync-cookie mechanism: `POST /api/board-sync/session-cookie` validates board access, signs `drawi_sync_access` with HMAC-SHA256, and sets an 8-hour HttpOnly cookie. The worker verifies signature, expiry, and room id before WebSocket, upload, or download access.
 - R2 assets: board files are stored under `rooms/{roomId}/uploads/{uploadId}` with MIME allowlist, size limit, immutable caching, CSP `default-src 'none'`, and `nosniff`.
 - Checkpoint flow: manual and session-end actions create immutable checkpoint metadata with a generated `snapshotStorageKey`. Actual snapshot upload to R2 is not implemented yet.
 - Restore flow: `Restore as new board` creates a new board with provenance metadata, but does not hydrate the new room from checkpoint payload yet.
 - Private notes: `student_notes` are plain text keyed by `(board_id, student_id)`, saved through an own-note server action that now also requires board visibility, and not included in sync worker, LiveKit, checkpoint payloads, or public/export paths.
 - Existing mobile layout: public/auth/app pages use responsive grids and spacing; authenticated visual smoke still needs a signed-in local session.
-- tldraw-bound production code remains in:
-  - `apps/web/package.json`
-  - `apps/web/app/layout.tsx`
-  - `apps/web/features/board/collaborative-board.tsx`
-  - `apps/web/features/board/sync-client.ts`
-  - `apps/web/server/env/server.ts`
-  - `.env.example`
-  - `apps/sync-worker/package.json`
-  - `apps/sync-worker/wrangler.jsonc`
-  - `apps/sync-worker/worker/worker.ts`
-  - `apps/sync-worker/worker/TldrawDurableObject.ts`
-  - `apps/sync-worker/worker/assetUploads.ts`
-  - `apps/sync-worker/worker-configuration.d.ts`
-  - migration/schema fields named `tldraw_schema_version`
+- Production board dependency is now `@excalidraw/excalidraw` plus Drawi-owned sync. Historical migration/schema fields still include `tldraw_schema_version`; do not remove or rewrite old migrations without a dedicated compatibility task.
 - Current test coverage:
   - Unit tests cover handle rules, invite helpers, permission helpers, sync token signing, sync client URL/cookie behavior, and the 8-hour sync TTL.
   - Invite helper tests now cover pasted invite-code/link normalization, including malformed percent encoding.
@@ -65,7 +52,7 @@ Baseline commit: 6a54d726f566437eacdaa1ec0b11a76d61ca29d9
 | T005 | P0       | Todo        | Public profiles      | Add user profile pages and published-board listings.                                          | T004                               | Public handles resolve to user pages; published boards are visible; private boards are hidden; existing `/app/profile` remains unchanged.              | Route/service tests plus Browser smoke.                                                       |
 | T006 | P0       | Todo        | Checkpoints          | Implement real checkpoint snapshot payload upload at manual and session end checkpoints.      | T003                               | Checkpoint metadata points to an existing immutable R2 object; failures do not mark sessions ended without a recorded checkpoint decision.             | Unit/service tests with storage adapter mock; worker/storage tests if adapter touches worker. |
 | T007 | P0       | Todo        | Restore              | Hydrate `Restore as new board` from checkpoint payload.                                       | T006                               | Restored board opens as a new editable board with checkpoint content and provenance metadata.                                                          | Service tests plus sync/board smoke.                                                          |
-| T008 | P0       | Todo        | Excalidraw migration | Replace tldraw board UI/sync with `@excalidraw/excalidraw` and Drawi-owned self-hosted sync.  | T003, T006, T007                   | No production dependency or env var remains for tldraw; existing board/session/library flows still work; migration checks pass.                        | Unit, integration, worker, Browser, and E2E coverage.                                         |
+| T008 | P0       | Done        | Excalidraw migration | Replace tldraw board UI/sync with `@excalidraw/excalidraw` and Drawi-owned self-hosted sync.  | T003, T006, T007                   | No production dependency or env var remains for tldraw; existing board/session/library flows still work; migration checks pass.                        | Unit, integration, worker, Browser, and E2E coverage.                                         |
 | T009 | P1       | Todo        | E2E                  | Add Playwright E2E with tutor/student browser contexts.                                       | Stable local test DB and seed flow | Critical flows pass: signup/signin, profile, create lesson, invite join, edit/read-only, notes, end session, libraries.                                | Playwright suite in CI-compatible config.                                                     |
 | T010 | P1       | Todo        | Mobile QA            | Add authenticated mobile smoke coverage.                                                      | T009                               | Main app, boards, board page, and session page do not overflow or obscure primary controls on mobile.                                                  | Playwright mobile viewport tests and screenshots.                                             |
 | T011 | P0       | Done        | Join flow            | Add a user-visible conference/lesson-code input.                                              | T003                               | Students can open `/join`, paste a raw code or full invite link, and land in the existing `/join/[inviteCode]` flow.                                   | Invite normalization unit tests; Browser desktop/mobile join smoke.                           |
@@ -77,7 +64,7 @@ Baseline commit: 6a54d726f566437eacdaa1ec0b11a76d61ca29d9
 Integrator status:
 
 - Branch: `codex/drawi-product-suite`, created from `main` on 2026-06-30 with the existing working tree preserved.
-- 2026-07-01 integration review resumed on clean worktree `/Users/daniillickovaha/Documents/drawi-product-suite-integration`; feature branch refs still point at baseline `6a54d726f566437eacdaa1ec0b11a76d61ca29d9`, so Agent B/C/D work exists as dirty worktree changes in `/Users/daniillickovaha/Documents/drawi` and Agent A work exists as dirty worktree changes in `/Users/daniillickovaha/Documents/drawi-excalidraw-board-sync`.
+- 2026-07-01 integration review resumed on clean worktree `/Users/daniillickovaha/Documents/drawi_trees/drawi-product-suite-integration`; feature branch refs still point at baseline `6a54d726f566437eacdaa1ec0b11a76d61ca29d9`, so Agent B/C/D work exists as dirty worktree changes in `/Users/daniillickovaha/Documents/drawi_trees/drawi` and Agent A work exists as dirty worktree changes in `/Users/daniillickovaha/Documents/drawi_trees/drawi-excalidraw-board-sync`.
 - Current integration rule: apply only reviewed Agent A-D files into `codex/drawi-product-suite`; keep unrelated untracked `MinerU-master/`, generated `next-env.d.ts` churn, placeholder `pnpm-workspace.yaml` allowBuilds, and historical `docs/mvp-plan.md` backlog edits out unless explicitly needed.
 - 2026-07-01 integration result: reviewed and integrated Agent A-D work into `codex/drawi-product-suite` by applying reviewed worktree diffs because the feature branch refs had no separate commits. Added repository-local `.agents/skills/full-project-review` and used it for the review checklist.
 - Integrated scope: Excalidraw board client, Drawi-owned sync worker Durable Object, authorized upload/download routes, LiveKit bottom media rail and real mic/camera/share controls, private note overlays, channel-style profiles, profile search, friend requests, board/channel privacy, app shell polish, and Settings day/night theme.
@@ -86,16 +73,17 @@ Integrator status:
 - Verification passed on `codex/drawi-product-suite`: `CI=true pnpm install --frozen-lockfile` (with pnpm ignored-build-script warning for `esbuild`, `sharp`, `unrs-resolver`, `workerd`); focused `pnpm --filter @drawi/web test -- apps/web/tests/board-sync-client.test.ts` (the package runner executed all 4 web test files, 36 tests); focused domain and LiveKit media test commands (also all 4 files / 36 tests); `pnpm --filter @drawi/sync-worker typecheck`; `pnpm format:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test`; `pnpm --filter @drawi/web test:coverage` at 100% statements/branches/functions/lines; `pnpm --filter @drawi/sync-worker build`; and `pnpm build` with dev-safe env vars inline.
 - Browser/Playwright smoke passed after installing the missing Playwright Chromium cache: dev server at `http://127.0.0.1:3010`; desktop and mobile `/`, `/join`, `/sign-in` were nonblank, had no horizontal overflow, and emitted no console warnings/errors. Screenshots saved under `/tmp/drawi-integration-qa-2026-07-01`.
 - 2026-07-01 follow-up: added concise local launch instructions in `start.md` for the integrated worktree/branch.
+- 2026-07-01 follow-up: moved all three worktrees under `/Users/daniillickovaha/Documents/drawi_trees/` and updated README/start instructions to point at the new layout.
 - Remaining risks: no migrated disposable Postgres was run for migration `0001_boring_bloodscream.sql`; no authenticated tutor/student Browser screenshots were captured for `/app/profile`, `/app/search`, `/u/[handle]`, board pages, or live session because no seeded authenticated local session was available; existing live tldraw room payloads are not automatically converted to Excalidraw scene JSON; checkpoint snapshot payload upload and restore hydration remain separate unfinished tasks.
 - Exact next integrator task: run a disposable migrated database/authenticated smoke for profile search, public channel visibility, board/session rendering, Excalidraw sync-cookie connection, readonly mode, and LiveKit controls.
 
 ### Agent A Board Sync
 
 - Branch: `codex/excalidraw-board-sync`.
-- Status: in progress on 2026-06-30; branch created from `codex/drawi-product-suite` in isolated worktree `/Users/daniillickovaha/Documents/drawi-excalidraw-board-sync` to avoid mixing with other agents' uncommitted work.
-- Current scope: replace the tldraw board UI/sync boundary with `@excalidraw/excalidraw` and a Drawi-owned WebSocket Durable Object protocol while preserving sync-cookie authorization, read-only mode, and authorized asset routes.
-- Verification plan: focused board sync client tests first, then sync worker typecheck/build, root `pnpm typecheck`, root `pnpm test`, and root `pnpm build`.
-- Exact next Agent A task: implement the Excalidraw client adapter and Drawi sync worker protocol, then remove tldraw production dependencies once the replacement compiles and tests pass.
+- Status: integrated into `codex/drawi-product-suite` on 2026-07-01; branch worktree now lives at `/Users/daniillickovaha/Documents/drawi_trees/drawi-excalidraw-board-sync`.
+- Completed scope: replaced the tldraw board UI/sync boundary with `@excalidraw/excalidraw` and a Drawi-owned WebSocket Durable Object protocol while preserving sync-cookie authorization, read-only mode, and authorized asset routes.
+- Verification passed after integration: focused board sync tests, sync-worker typecheck/build, root `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm --filter @drawi/web test:coverage`, and `pnpm build`.
+- Exact next Agent A task: do not reimplement the board stack; only add authenticated DB/browser smoke or compatibility migration work if assigned.
 - Merge guardrails: preserve the working Excalidraw replacement, Drawi-owned self-hosted sync, sync-cookie authorization, read-only behavior, authorized uploads/downloads, and removal of tldraw production dependency only after the replacement is working and verified.
 
 ### Agent B Lesson Media Notes
@@ -203,10 +191,10 @@ Integrator status:
 
 ## Known risks and blockers
 
-- The app still depends on tldraw in production code and environment names; this is explicitly not yet compliant with the target licensing end state.
-- User-requested YouTube-like public profile, explicit board privacy modes, and Excalidraw/own-board-stack replacement are not complete yet.
+- Production board code now uses Excalidraw plus Drawi-owned sync, but old live tldraw room payloads are not automatically migrated into Excalidraw JSON.
+- User-requested YouTube-like public profile, explicit board privacy modes, and Excalidraw/own-board-stack replacement are integrated, but authenticated Browser/database smoke still needs a disposable migrated database.
 - Board privacy data model and controls exist, but the generated migration has not been applied to the local/user database in this session.
-- Public profile pages and public/link read-only board routes are still missing, so T004 is not complete even though the schema/domain/UI foundation is in place.
+- Public profile pages exist, but the intended own-channel/profile settings split and profile board listing behavior need follow-up from the next product tasks.
 - Checkpoint metadata exists, but checkpoint JSON payload upload is not implemented.
 - Restore-as-new-board records provenance, but does not load checkpoint content into the new room.
 - There is no real Postgres integration test harness yet.

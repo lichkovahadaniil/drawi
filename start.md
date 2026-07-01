@@ -3,7 +3,7 @@
 Integrated branch: `codex/drawi-product-suite`
 
 ```bash
-cd /Users/daniillickovaha/Documents/drawi-product-suite-integration
+cd /Users/daniillickovaha/Documents/drawi_trees/drawi-product-suite-integration
 cp .env.example .env
 pnpm install --frozen-lockfile
 pnpm dev:db
