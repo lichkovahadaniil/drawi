@@ -16,7 +16,7 @@ export default async function SearchPage({
     <main className="mx-auto grid max-w-4xl gap-6">
       <header>
         <h1 className="text-3xl font-black tracking-tight text-[var(--ink-0)]">Search</h1>
-        <p className="mt-2 text-[var(--ink-2)]">Find channels by nickname or handle.</p>
+        <p className="mt-2 text-[var(--ink-2)]">Find profiles by nickname or handle.</p>
       </header>
 
       <form className="drawi-panel flex flex-col gap-3 p-4 sm:flex-row" method="get">
@@ -47,23 +47,23 @@ export default async function SearchPage({
                   {result.profile.displayName}
                 </h2>
                 <p className="mt-2 text-pretty text-sm leading-6 text-[var(--ink-2)]">
-                  {result.profile.bio || result.profile.roleLabel}
+                  {result.profile.bio || "Open profile"}
                 </p>
               </div>
               <div className="grid gap-1 text-left sm:text-right">
                 <p className="text-sm font-black text-[var(--ink-0)]">
-                  {result.view === "teaching" ? "Teaching channel" : "Learning profile"}
+                  Opens {result.tab === "created" ? "Created" : "Joined"}
                 </p>
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--ink-3)]">
-                  <span className="tabular-nums">{result.teachingBoardCount}</span> teaching ·{" "}
-                  <span className="tabular-nums">{result.learningBoardCount}</span> learning
+                  <span className="tabular-nums">{result.createdBoardCount}</span> created ·{" "}
+                  <span className="tabular-nums">{result.joinedBoardCount}</span> joined
                 </p>
               </div>
             </Link>
           ))
         ) : (
           <div className="drawi-panel p-5 text-sm text-[var(--ink-2)]">
-            {data.query ? "No visible channels found." : "Search for a channel."}
+            {data.query ? "No visible profiles found." : "Search for a profile."}
           </div>
         )}
       </section>

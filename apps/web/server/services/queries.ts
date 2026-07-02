@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, ilike, ne, or } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, ne, or } from "drizzle-orm";
 import { getRequiredUser, getServerSession } from "../auth/auth";
 import { getDb } from "../db/client";
 import {
@@ -15,9 +15,10 @@ import {
 } from "../db/schema";
 import { normalizeHandle } from "../domain/handles";
 import {
-  canListBoardOnChannel,
+  type ProfileBoardTab,
+  canListBoardOnProfile,
   canViewChannel,
-  chooseSearchProfileView,
+  chooseSearchProfileTab,
   getFriendshipState,
 } from "../domain/profile-privacy";
 import type { Actor, FriendshipRecord } from "../domain/types";
@@ -25,20 +26,20 @@ import type { Actor, FriendshipRecord } from "../domain/types";
 type BoardRow = typeof boards.$inferSelect;
 type ProfileRow = typeof profiles.$inferSelect;
 type FriendshipRow = typeof friendships.$inferSelect;
-type ChannelTab = "teaching" | "learning";
 type PersonSummary = { userId: string; displayName: string; handle: string | null };
 type EnrichedFriendship = { friendship: FriendshipRow; person: PersonSummary };
+type JoinedBoardCandidate = { board: BoardRow; activityAt: Date };
 type ProfileSearchResult = {
   profile: ProfileRow;
   friendshipState: ReturnType<typeof getFriendshipState>;
-  view: ReturnType<typeof chooseSearchProfileView>;
-  teachingBoardCount: number;
-  learningBoardCount: number;
+  tab: ReturnType<typeof chooseSearchProfileTab>;
+  createdBoardCount: number;
+  joinedBoardCount: number;
   href: string;
 };
 
-function parseChannelTab(tab: string | undefined): ChannelTab {
-  return tab === "learning" ? "learning" : "teaching";
+function parseProfileBoardTab(tab: string | undefined): ProfileBoardTab {
+  return tab === "joined" || tab === "learning" ? "joined" : "created";
 }
 
 export async function getMyDashboard() {
@@ -107,12 +108,18 @@ export async function getSessionPage(sessionId: string) {
 }
 
 export async function getProfile() {
+  const data = await getMyProfile();
+  if (!data) return null;
+  const connections = await getProfileConnections(data.user.id);
+  return { ...data, ...connections };
+}
+
+export async function getMyProfile() {
   const user = await getRequiredUser();
   if (!user) return null;
   const db = getDb();
-  const [profile] = await db.select().from(profiles).where(eq(profiles.userId, user.id));
-  const connections = await getProfileConnections(user.id);
-  return { user, profile, ...connections };
+  const [profile] = await db.select().from(profiles).where(eq(profiles.userId, user.id)).limit(1);
+  return { user, profile: profile ?? null };
 }
 
 export async function getPublicProfilePage(handle: string, tab?: string) {
@@ -136,11 +143,11 @@ export async function getPublicProfilePage(handle: string, tab?: string) {
     friendship,
   );
 
-  const teachingBoards = channelVisible
-    ? await getVisibleTeachingBoards(profile, viewer, friendship, 48)
+  const createdBoards = channelVisible
+    ? await getVisibleCreatedBoards(profile, viewer, friendship, 48)
     : [];
-  const learningBoards = channelVisible
-    ? await getVisibleLearningBoards(profile.userId, viewer, 48)
+  const joinedBoards = channelVisible
+    ? await getVisibleJoinedBoards(profile.userId, viewer, 48)
     : [];
 
   return {
@@ -149,9 +156,9 @@ export async function getPublicProfilePage(handle: string, tab?: string) {
     friendship,
     friendshipState,
     channelVisible,
-    activeTab: parseChannelTab(tab),
-    teachingBoards,
-    learningBoards,
+    activeTab: parseProfileBoardTab(tab),
+    createdBoards,
+    joinedBoards,
   };
 }
 
@@ -188,24 +195,24 @@ export async function getProfileSearchResults(rawQuery: string | undefined) {
       continue;
     }
 
-    const teachingBoards = await getVisibleTeachingBoards(profile, viewer, friendship, 3);
-    const learningBoards = await getVisibleLearningBoards(profile.userId, viewer, 3);
-    const view = chooseSearchProfileView(profile.teachingEnabled, teachingBoards.length);
+    const createdBoards = await getVisibleCreatedBoards(profile, viewer, friendship, 3);
+    const joinedBoards = await getVisibleJoinedBoards(profile.userId, viewer, 3);
+    const tab = chooseSearchProfileTab(createdBoards.length, joinedBoards.length);
 
     results.push({
       profile,
       friendshipState: getFriendshipState(viewer, profile.userId, friendship),
-      view,
-      teachingBoardCount: teachingBoards.length,
-      learningBoardCount: learningBoards.length,
-      href: `/u/${profile.handle}?tab=${view}`,
+      tab,
+      createdBoardCount: createdBoards.length,
+      joinedBoardCount: joinedBoards.length,
+      href: `/u/${profile.handle}?tab=${tab}`,
     });
   }
 
   return { user, query, results };
 }
 
-async function getVisibleTeachingBoards(
+async function getVisibleCreatedBoards(
   profile: ProfileRow,
   viewer: Actor | null,
   friendship: FriendshipRecord | null,
@@ -219,33 +226,58 @@ async function getVisibleTeachingBoards(
     .limit(Math.max(limit * 4, 24));
 
   return rows
-    .filter((board) => canListBoardOnChannel(viewer, profile.userId, board, friendship))
+    .filter((board) => canListBoardOnProfile(viewer, profile.userId, board, friendship))
     .slice(0, limit);
 }
 
-async function getVisibleLearningBoards(
-  profileUserId: string,
-  viewer: Actor | null,
-  limit: number,
-) {
-  const rows = await getDb()
-    .select({ board: boards })
+async function getVisibleJoinedBoards(profileUserId: string, viewer: Actor | null, limit: number) {
+  const candidateLimit = Math.max(limit * 4, 24);
+  const db = getDb();
+  const libraryRows = await db
+    .select({ board: boards, activityAt: libraryItems.createdAt })
     .from(libraryItems)
     .innerJoin(boards, eq(libraryItems.boardId, boards.id))
     .where(
       and(
         eq(libraryItems.userId, profileUserId),
         eq(libraryItems.relationship, "learned"),
+        ne(boards.ownerId, profileUserId),
         ne(boards.status, "deleted"),
       ),
     )
     .orderBy(desc(libraryItems.createdAt))
-    .limit(Math.max(limit * 4, 24));
+    .limit(candidateLimit);
+
+  const accessRows = await db
+    .select({ board: boards, activityAt: boardAccess.updatedAt })
+    .from(boardAccess)
+    .innerJoin(boards, eq(boardAccess.boardId, boards.id))
+    .where(
+      and(
+        eq(boardAccess.userId, profileUserId),
+        isNull(boardAccess.revokedAt),
+        ne(boards.ownerId, profileUserId),
+        ne(boards.status, "deleted"),
+      ),
+    )
+    .orderBy(desc(boardAccess.updatedAt))
+    .limit(candidateLimit);
+
+  const candidatesByBoardId = new Map<string, JoinedBoardCandidate>();
+  for (const row of [...libraryRows, ...accessRows]) {
+    const existing = candidatesByBoardId.get(row.board.id);
+    if (!existing || row.activityAt > existing.activityAt) {
+      candidatesByBoardId.set(row.board.id, row);
+    }
+  }
 
   const visibleBoards: BoardRow[] = [];
-  for (const { board } of rows) {
+  const candidates = Array.from(candidatesByBoardId.values()).sort(
+    (first, second) => second.activityAt.getTime() - first.activityAt.getTime(),
+  );
+  for (const { board } of candidates) {
     const friendship = await getFriendshipBetween(viewer?.id, board.ownerId);
-    if (canListBoardOnChannel(viewer, board.ownerId, board, friendship)) {
+    if (canListBoardOnProfile(viewer, profileUserId, board, friendship)) {
       visibleBoards.push(board);
     }
   }

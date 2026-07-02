@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, CircleCheck, ShieldCheck } from "lucide-react";
 import { CollaborativeBoard } from "@/features/board/collaborative-board";
 import { PrivateNotesPanel } from "@/features/board/private-notes-panel";
 import {
@@ -25,6 +27,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
   const canEdit = canEditBoard(data.user, data.board, data.access);
   const canManage = canManageBoard(data.user, data.board, data.access);
   const noteBody = await getMyNote(data.board.id);
+  const latestSessionEnded = data.liveSession?.status === "ended";
 
   return (
     <main className="grid gap-5">
@@ -54,6 +57,32 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
         ) : null}
       </header>
 
+      {latestSessionEnded ? (
+        <section className="drawi-panel flex flex-wrap items-center justify-between gap-4 p-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-[8px] bg-[var(--mint-soft)] text-[var(--success)]">
+              <CircleCheck aria-hidden="true" className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-balance text-base font-black text-[var(--ink-0)]">
+                Lesson ended and the board was saved
+              </h2>
+              <p className="mt-1 text-pretty text-sm leading-6 text-[var(--ink-2)]">
+                The session-end checkpoint is listed below. Board privacy is still{" "}
+                <span className="font-black text-[var(--ink-0)]">
+                  {BOARD_VISIBILITY_LABELS[data.board.visibility]}
+                </span>
+                .
+              </p>
+            </div>
+          </div>
+          <Link href="/app/boards" className="drawi-button secondary">
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            Library
+          </Link>
+        </section>
+      ) : null}
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <CollaborativeBoard
           boardId={data.board.id}
@@ -63,8 +92,23 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
         <aside className="grid content-start gap-4">
           {canManage ? (
             <section className="drawi-panel grid gap-3 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-black">Board privacy</h2>
+                  <p className="mt-1 text-pretty text-sm leading-6 text-[var(--ink-2)]">
+                    Controls where this board appears on profile pages. Invited participants keep
+                    their board access.
+                  </p>
+                </div>
+                <span className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-[8px] bg-[var(--surface-muted)] px-3 text-xs font-black text-[var(--ink-1)]">
+                  <ShieldCheck aria-hidden="true" className="size-4" />
+                  {BOARD_VISIBILITY_LABELS[data.board.visibility]}
+                </span>
+              </div>
               <div>
-                <h2 className="font-black">Board privacy</h2>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--ink-3)]">
+                  Current setting
+                </p>
                 <p className="mt-1 text-sm leading-6 text-[var(--ink-2)]">
                   {BOARD_VISIBILITY_DESCRIPTIONS[data.board.visibility]}
                 </p>
@@ -88,7 +132,8 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
                   </select>
                 </label>
                 <button className="drawi-button secondary" type="submit">
-                  Save privacy
+                  <ShieldCheck aria-hidden="true" className="size-4" />
+                  Save selected privacy
                 </button>
               </form>
             </section>

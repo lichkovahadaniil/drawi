@@ -16,8 +16,9 @@ import {
   profiles,
   sessionMemberships,
 } from "../db/schema";
-import { parseBoardVisibilityInput } from "../domain/board-visibility";
+import { isBoardVisibility, parseBoardVisibilityInput } from "../domain/board-visibility";
 import { canDeleteBoard, canManageBoard } from "../domain/permissions";
+import type { BoardVisibility } from "../domain/types";
 import {
   createInviteCode,
   hashInviteCode,
@@ -25,6 +26,13 @@ import {
   normalizeInviteCodeInput,
 } from "../domain/invites";
 import { writeCheckpointSnapshot } from "./checkpoint-snapshots";
+
+function parseBoardVisibilityUpdateInput(value: FormDataEntryValue | null): BoardVisibility {
+  if (!isBoardVisibility(value)) {
+    throw new Error("Choose a valid board visibility.");
+  }
+  return value;
+}
 
 export async function startLessonAction(formData: FormData) {
   const user = await getRequiredUser();
@@ -228,6 +236,16 @@ export async function endSessionAction(sessionId: string) {
   });
 
   revalidatePath("/app");
+  revalidatePath("/app/boards");
+  revalidatePath(`/app/boards/${liveSession.boardId}`);
+  const [ownerProfile] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.userId, board.ownerId))
+    .limit(1);
+  if (ownerProfile) {
+    revalidatePath(`/u/${ownerProfile.handle}`);
+  }
   redirect(`/app/boards/${liveSession.boardId}`);
 }
 
@@ -271,7 +289,7 @@ export async function updateBoardVisibilityAction(boardId: string, formData: For
   const user = await getRequiredUser();
   if (!user) redirect("/sign-in");
 
-  const visibility = parseBoardVisibilityInput(formData.get("visibility"));
+  const visibility = parseBoardVisibilityUpdateInput(formData.get("visibility"));
   const db = getDb();
   const [board] = await db.select().from(boards).where(eq(boards.id, boardId)).limit(1);
   if (!board) throw new Error("Board not found.");

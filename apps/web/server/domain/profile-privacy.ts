@@ -11,19 +11,19 @@ export const CHANNEL_VISIBILITIES = ["private", "friends", "public"] as const;
 export const DEFAULT_CHANNEL_VISIBILITY = "public" satisfies ChannelVisibility;
 
 export const CHANNEL_VISIBILITY_LABELS = {
-  private: "Private channel",
+  private: "Private profile",
   friends: "Friends only",
-  public: "Public channel",
+  public: "Public profile",
 } satisfies Record<ChannelVisibility, string>;
 
 export const CHANNEL_VISIBILITY_DESCRIPTIONS = {
-  private: "Only you can see your channel tabs and boards.",
-  friends: "Accepted friends can see your channel tabs and friends-only boards.",
-  public: "Everyone can see your channel and public boards.",
+  private: "Only you can see your profile tabs and boards.",
+  friends: "Accepted friends can see your profile tabs and friends-only boards.",
+  public: "Everyone can see your profile and public boards.",
 } satisfies Record<ChannelVisibility, string>;
 
 export type FriendshipState = "self" | "friends" | "request_sent" | "request_received" | "none";
-export type SearchProfileView = "teaching" | "learning";
+export type ProfileBoardTab = "created" | "joined";
 export type FriendRequestResponse = Extract<FriendshipStatus, "accepted" | "declined">;
 
 export function isChannelVisibility(value: unknown): value is ChannelVisibility {
@@ -66,6 +66,26 @@ export function canListBoardOnChannel(
   board: BoardAuthRecord,
   friendship?: FriendshipRecord | null,
 ) {
+  return canListBoardByVisibility(actor, ownerId, board, friendship);
+}
+
+export function canListBoardOnProfile(
+  actor: Actor | null,
+  profileOwnerId: string,
+  board: BoardAuthRecord,
+  boardOwnerFriendship?: FriendshipRecord | null,
+) {
+  if (board.status !== "active") return false;
+  if (actor?.id === profileOwnerId) return true;
+  return canListBoardByVisibility(actor, board.ownerId, board, boardOwnerFriendship);
+}
+
+function canListBoardByVisibility(
+  actor: Actor | null,
+  ownerId: string,
+  board: BoardAuthRecord,
+  friendship?: FriendshipRecord | null,
+) {
   if (board.status !== "active") return false;
   const friendshipState = getFriendshipState(actor, ownerId, friendship);
   if (friendshipState === "self") return true;
@@ -94,9 +114,9 @@ export function canRespondToFriendRequest(
   );
 }
 
-export function chooseSearchProfileView(
-  teachingEnabled: boolean,
-  visibleTeachingBoardCount: number,
-): SearchProfileView {
-  return teachingEnabled || visibleTeachingBoardCount > 0 ? "teaching" : "learning";
+export function chooseSearchProfileTab(
+  visibleCreatedBoardCount: number,
+  visibleJoinedBoardCount: number,
+): ProfileBoardTab {
+  return visibleCreatedBoardCount > 0 || visibleJoinedBoardCount === 0 ? "created" : "joined";
 }

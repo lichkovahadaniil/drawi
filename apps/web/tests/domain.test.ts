@@ -13,10 +13,11 @@ import {
   CHANNEL_VISIBILITY_LABELS,
   DEFAULT_CHANNEL_VISIBILITY,
   canListBoardOnChannel,
+  canListBoardOnProfile,
   canRespondToFriendRequest,
   canSendFriendRequest,
   canViewChannel,
-  chooseSearchProfileView,
+  chooseSearchProfileTab,
   getFriendshipState,
   isChannelVisibility,
   parseChannelVisibilityInput,
@@ -200,6 +201,41 @@ describe("channel privacy and friendship helpers", () => {
     expect(canListBoardOnChannel(null, "tutor", deletedPublicBoard)).toBe(false);
   });
 
+  it("shows own profile boards while preserving board visibility for other viewers", () => {
+    const profileOwner = { id: "student" };
+    const boardOwner = { id: "tutor" };
+    const privateJoinedBoard = {
+      id: "board-1",
+      ownerId: "tutor",
+      status: "active" as const,
+      visibility: "private" as const,
+    };
+    const friendsJoinedBoard = {
+      ...privateJoinedBoard,
+      id: "board-2",
+      visibility: "friends" as const,
+    };
+    const publicJoinedBoard = {
+      ...privateJoinedBoard,
+      id: "board-3",
+      visibility: "public" as const,
+    };
+    const deletedJoinedBoard = { ...publicJoinedBoard, status: "deleted" as const };
+
+    expect(canListBoardOnProfile(profileOwner, "student", privateJoinedBoard)).toBe(true);
+    expect(canListBoardOnProfile(profileOwner, "student", friendsJoinedBoard)).toBe(true);
+    expect(canListBoardOnProfile(profileOwner, "student", publicJoinedBoard)).toBe(true);
+    expect(canListBoardOnProfile(profileOwner, "student", deletedJoinedBoard)).toBe(false);
+
+    expect(canListBoardOnProfile(boardOwner, "student", privateJoinedBoard)).toBe(true);
+    expect(canListBoardOnProfile(stranger, "student", privateJoinedBoard)).toBe(false);
+    expect(canListBoardOnProfile(friend, "student", friendsJoinedBoard, acceptedFriendship)).toBe(
+      true,
+    );
+    expect(canListBoardOnProfile(stranger, "student", friendsJoinedBoard)).toBe(false);
+    expect(canListBoardOnProfile(null, "student", publicJoinedBoard)).toBe(true);
+  });
+
   it("gates friend requests and request responses", () => {
     expect(canSendFriendRequest(stranger, "tutor")).toBe(true);
     expect(canSendFriendRequest(owner, "tutor")).toBe(false);
@@ -213,10 +249,11 @@ describe("channel privacy and friendship helpers", () => {
     expect(canRespondToFriendRequest(owner, acceptedFriendship, "accepted")).toBe(false);
   });
 
-  it("chooses channel search mode from teaching intent or visible teaching boards", () => {
-    expect(chooseSearchProfileView(true, 0)).toBe("teaching");
-    expect(chooseSearchProfileView(false, 1)).toBe("teaching");
-    expect(chooseSearchProfileView(false, 0)).toBe("learning");
+  it("chooses profile search tabs from visible created and joined boards", () => {
+    expect(chooseSearchProfileTab(1, 0)).toBe("created");
+    expect(chooseSearchProfileTab(0, 1)).toBe("joined");
+    expect(chooseSearchProfileTab(2, 3)).toBe("created");
+    expect(chooseSearchProfileTab(0, 0)).toBe("created");
   });
 });
 

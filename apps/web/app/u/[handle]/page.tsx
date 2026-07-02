@@ -21,7 +21,7 @@ export default async function PublicProfilePage({
   const data = await getPublicProfilePage(handle, tab);
   if (!data) notFound();
 
-  const activeBoards = data.activeTab === "learning" ? data.learningBoards : data.teachingBoards;
+  const activeBoards = data.activeTab === "joined" ? data.joinedBoards : data.createdBoards;
 
   return (
     <main className="mx-auto grid max-w-6xl gap-6">
@@ -34,7 +34,7 @@ export default async function PublicProfilePage({
             {data.profile.displayName}
           </h1>
           <p className="mt-2 text-sm font-bold text-[var(--ink-2)]">
-            {data.profile.roleLabel} · {CHANNEL_VISIBILITY_LABELS[data.profile.channelVisibility]}
+            {CHANNEL_VISIBILITY_LABELS[data.profile.channelVisibility]}
           </p>
           {data.channelVisible && data.profile.bio ? (
             <p className="mt-4 max-w-3xl text-pretty leading-7 text-[var(--ink-1)]">
@@ -55,18 +55,18 @@ export default async function PublicProfilePage({
         <>
           <nav className="flex flex-wrap gap-2" aria-label="Profile tabs">
             <Link
-              className={`drawi-button secondary ${data.activeTab === "teaching" ? "" : "opacity-70"}`}
-              href={`/u/${data.profile.handle}?tab=teaching` as Route}
+              className={`drawi-button secondary ${data.activeTab === "created" ? "" : "opacity-70"}`}
+              href={`/u/${data.profile.handle}?tab=created` as Route}
             >
-              Teaching
-              <span className="tabular-nums">{data.teachingBoards.length}</span>
+              Created
+              <span className="tabular-nums">{data.createdBoards.length}</span>
             </Link>
             <Link
-              className={`drawi-button secondary ${data.activeTab === "learning" ? "" : "opacity-70"}`}
-              href={`/u/${data.profile.handle}?tab=learning` as Route}
+              className={`drawi-button secondary ${data.activeTab === "joined" ? "" : "opacity-70"}`}
+              href={`/u/${data.profile.handle}?tab=joined` as Route}
             >
-              Learning
-              <span className="tabular-nums">{data.learningBoards.length}</span>
+              Joined
+              <span className="tabular-nums">{data.joinedBoards.length}</span>
             </Link>
           </nav>
 
@@ -81,10 +81,10 @@ export default async function PublicProfilePage({
       ) : (
         <section className="drawi-panel p-6">
           <h2 className="text-2xl font-black tracking-tight text-[var(--ink-0)]">
-            Private channel
+            Private profile
           </h2>
           <p className="mt-2 text-pretty text-[var(--ink-2)]">
-            This channel is not visible with your current friendship status.
+            This profile is not visible with your current friendship status.
           </p>
         </section>
       )}
@@ -108,7 +108,7 @@ function ProfileFriendAction({
   if (state === "self") {
     return (
       <Link className="drawi-button secondary" href="/app/profile">
-        Edit channel
+        Edit profile
       </Link>
     );
   }

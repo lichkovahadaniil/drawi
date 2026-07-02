@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { DoorOpen, Flag, Save } from "lucide-react";
 import { CollaborativeBoard } from "@/features/board/collaborative-board";
 import { PrivateNotesPanel } from "@/features/board/private-notes-panel";
 import { LiveKitPanel } from "@/features/session/livekit-panel";
@@ -29,17 +30,34 @@ export default async function SessionPage({
     : null;
 
   const sessionExitControl = isTutor ? (
-    <form action={endSessionAction.bind(null, data.liveSession.id)}>
-      <button
-        className="drawi-button secondary min-h-10 px-3 py-2 text-xs text-[var(--danger)]"
-        type="submit"
-      >
-        End session
-      </button>
-    </form>
+    <details className="group relative">
+      <summary className="drawi-button secondary min-h-10 cursor-pointer select-none px-3 py-2 text-xs !text-[var(--danger)] marker:hidden [&::-webkit-details-marker]:hidden">
+        <Flag aria-hidden="true" className="size-4" />
+        End lesson
+      </summary>
+      <div className="drawi-panel absolute bottom-[calc(100%+0.6rem)] right-0 z-40 grid w-[min(20rem,calc(100vw-2rem))] gap-3 p-3 text-left">
+        <div className="grid gap-1">
+          <p className="text-sm font-black text-[var(--ink-0)]">End this lesson?</p>
+          <p className="text-pretty text-xs font-semibold leading-5 text-[var(--ink-2)]">
+            Drawi will create a session-end checkpoint, keep the board privacy unchanged, and open
+            the saved board page.
+          </p>
+        </div>
+        <form action={endSessionAction.bind(null, data.liveSession.id)}>
+          <button
+            className="drawi-button w-full !bg-[var(--danger)] !text-white hover:!bg-[var(--danger)]"
+            type="submit"
+          >
+            <Save aria-hidden="true" className="size-4" />
+            End and save
+          </button>
+        </form>
+      </div>
+    </details>
   ) : (
     <form action={leaveSessionAction.bind(null, data.liveSession.id)}>
       <button className="drawi-button secondary min-h-10 px-3 py-2 text-xs" type="submit">
+        <DoorOpen aria-hidden="true" className="size-4" />
         Leave
       </button>
     </form>

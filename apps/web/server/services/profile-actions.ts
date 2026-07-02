@@ -17,6 +17,7 @@ import {
 export async function upsertProfileAction(formData: FormData) {
   const user = await getRequiredUser();
   if (!user) redirect("/sign-in");
+  const db = getDb();
 
   const handleResult = validateHandle(String(formData.get("handle") ?? ""));
   if (!handleResult.ok) {
@@ -31,13 +32,26 @@ export async function upsertProfileAction(formData: FormData) {
   const bio = String(formData.get("bio") ?? "")
     .trim()
     .slice(0, 280);
-  const roleLabel = String(formData.get("roleLabel") ?? "Learner")
-    .trim()
-    .slice(0, 40);
-  const teachingEnabled = formData.get("teachingEnabled") === "on";
+  const [existingProfile] = await db
+    .select({
+      roleLabel: profiles.roleLabel,
+      teachingEnabled: profiles.teachingEnabled,
+    })
+    .from(profiles)
+    .where(eq(profiles.userId, user.id))
+    .limit(1);
+  const isSettingsProfileForm = formData.get("profileForm") === "settings";
+  const roleLabel = isSettingsProfileForm
+    ? (existingProfile?.roleLabel ?? "Drawi member")
+    : String(formData.get("roleLabel") ?? "Learner")
+        .trim()
+        .slice(0, 40);
+  const teachingEnabled = isSettingsProfileForm
+    ? (existingProfile?.teachingEnabled ?? false)
+    : formData.get("teachingEnabled") === "on";
   const channelVisibility = parseChannelVisibilityInput(formData.get("channelVisibility"));
 
-  await getDb()
+  await db
     .insert(profiles)
     .values({
       userId: user.id,
@@ -64,6 +78,7 @@ export async function upsertProfileAction(formData: FormData) {
     });
 
   revalidatePath("/app/profile");
+  revalidatePath("/app/settings");
   revalidatePath(`/u/${handleResult.normalized}`);
   revalidatePath("/app/search");
 }

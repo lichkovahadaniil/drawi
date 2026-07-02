@@ -67,22 +67,33 @@ try {
   await signUp(studentPage, student);
   await saveProfile(studentPage, student);
   await studentPage.goto(inviteUrl);
-  await studentPage.getByRole("button", { name: "Join lesson" }).click();
+  await clickAndWaitForUrl(
+    studentPage,
+    studentPage.getByRole("button", { name: "Join lesson" }),
+    /\/app\/sessions\//,
+  );
   await expectText(studentPage, lessonTitle);
   await expectText(studentPage, "Synced");
   await savePrivateNote(studentPage, "Student note");
 
   await tutorPage.bringToFront();
-  await tutorPage.getByRole("button", { name: "End session" }).click();
-  await tutorPage.waitForURL(/\/app\/boards\//, { timeout: timeoutMs });
+  await tutorPage.getByRole("button", { name: "End lesson" }).click();
+  await clickAndWaitForUrl(
+    tutorPage,
+    tutorPage.getByRole("button", { name: "End and save" }),
+    /\/app\/boards\//,
+  );
   await expectText(tutorPage, "Session end");
   await expectText(tutorPage, "Synced");
 
   await tutorPage.getByRole("button", { name: "Create checkpoint" }).click();
   await expectText(tutorPage, "Manual checkpoint");
 
-  await tutorPage.getByRole("button", { name: "Restore as new" }).first().click();
-  await tutorPage.waitForURL(/\/app\/boards\//, { timeout: timeoutMs });
+  await clickAndWaitForUrl(
+    tutorPage,
+    tutorPage.getByRole("button", { name: "Restore as new" }).first(),
+    /\/app\/boards\//,
+  );
   await expectText(tutorPage, `${lessonTitle} restored`);
   await expectText(tutorPage, "Synced");
 
@@ -100,26 +111,29 @@ async function signUp(page, account) {
   await page.getByLabel("Name").fill(account.name);
   await page.getByLabel("Email").fill(account.email);
   await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL(/\/app/, { timeout: timeoutMs });
+  await clickAndWaitForUrl(page, page.getByRole("button", { name: "Create account" }), /\/app/);
 }
 
 async function saveProfile(page, account) {
-  await page.goto(`${baseUrl}/app/profile`);
+  await page.goto(`${baseUrl}/app/settings?profile=create`);
   await page.getByLabel("Display name").fill(account.name);
   await page.getByLabel("Handle").fill(account.handle);
   await page.getByLabel("Bio").fill(`Smoke profile ${runId}`);
-  await page.getByLabel("Teaching channel").check();
-  await page.getByRole("button", { name: "Save profile" }).click();
+  await page.getByRole("button", { name: "Create profile" }).click();
   await page.waitForLoadState("networkidle");
-  await expectText(page, "Profile");
+  await page.goto(`${baseUrl}/app/profile`);
+  await page.waitForURL(new RegExp(`/u/${account.handle}$`), { timeout: timeoutMs });
+  await expectText(page, account.name);
 }
 
 async function startLesson(page, title) {
   await page.goto(`${baseUrl}/app/boards/new`);
   await page.getByLabel("Lesson title").fill(title);
-  await page.getByRole("button", { name: "Create board and invite" }).click();
-  await page.waitForURL(/\/app\/sessions\//, { timeout: timeoutMs });
+  await clickAndWaitForUrl(
+    page,
+    page.getByRole("button", { name: "Create board and invite" }),
+    /\/app\/sessions\//,
+  );
 }
 
 async function readInviteUrl(page) {
@@ -140,4 +154,8 @@ async function savePrivateNote(page, note) {
 
 async function expectText(page, text) {
   await page.getByText(text, { exact: false }).first().waitFor({ timeout: timeoutMs });
+}
+
+async function clickAndWaitForUrl(page, locator, url) {
+  await Promise.all([page.waitForURL(url, { timeout: timeoutMs }), locator.click()]);
 }

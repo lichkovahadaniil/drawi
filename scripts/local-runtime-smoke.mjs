@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const webDir = path.join(rootDir, "apps/web");
 const workerDir = path.join(rootDir, "apps/sync-worker");
 const runId = process.env.DRAWI_SMOKE_RUN_ID ?? String(Date.now());
 const dbName = `drawi_smoke_${runId.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase()}`;
@@ -53,24 +54,17 @@ try {
   await ensurePostgres();
   createDatabase();
   ensureDevVars();
-  runCommand("pnpm", ["db:migrate"], { env: smokeEnv() });
+  runCommand(webBin("drizzle-kit"), ["migrate"], { cwd: webDir, env: smokeEnv() });
 
-  const livekit = startProcess(
-    "livekit",
-    "pnpm",
-    ["exec", "livekit-server", "--dev", "--bind", "127.0.0.1"],
-    { env: smokeEnv() },
-  );
+  const livekit = startProcess("livekit", "livekit-server", ["--dev", "--bind", "127.0.0.1"], {
+    env: smokeEnv(),
+  });
   await waitForPort(livekitPort, "LiveKit", livekit);
 
   const syncWorker = startProcess(
     "sync-worker",
-    "pnpm",
+    workerBin("wrangler"),
     [
-      "--filter",
-      "@drawi/sync-worker",
-      "exec",
-      "wrangler",
       "dev",
       "--local",
       "--ip",
@@ -83,6 +77,7 @@ try {
       "warn",
     ],
     {
+      cwd: workerDir,
       env: {
         ...smokeEnv(),
         XDG_CONFIG_HOME: path.join(os.tmpdir(), "drawi-xdg-config"),
@@ -96,24 +91,13 @@ try {
 
   const web = startProcess(
     "web",
-    "pnpm",
-    [
-      "--filter",
-      "@drawi/web",
-      "exec",
-      "next",
-      "dev",
-      "--turbopack",
-      "--hostname",
-      "127.0.0.1",
-      "--port",
-      String(webPort),
-    ],
-    { env: smokeEnv() },
+    webBin("next"),
+    ["dev", "--webpack", "--hostname", "127.0.0.1", "--port", String(webPort)],
+    { cwd: webDir, env: smokeEnv() },
   );
   await waitForPort(webPort, "web app", web);
 
-  runCommand("pnpm", ["smoke:runtime"], {
+  runCommand(process.execPath, [path.join(rootDir, "scripts/runtime-smoke.mjs")], {
     env: {
       ...smokeEnv(),
       PLAYWRIGHT_BASE_URL: `http://127.0.0.1:${webPort}`,
@@ -168,7 +152,7 @@ async function ensurePostgres() {
     return;
   }
 
-  runCommand("pnpm", ["dev:db"]);
+  runCommand("sh", [path.join(rootDir, "scripts/dev-db.sh")]);
   await waitForPostgres();
 }
 
@@ -296,7 +280,7 @@ function startProcess(name, command, args, options = {}) {
   const logPath = path.join(logsDir, `${name}.log`);
   const log = fs.createWriteStream(logPath, { flags: "a" });
   const child = spawn(command, args, {
-    cwd: rootDir,
+    cwd: options.cwd ?? rootDir,
     env: options.env ?? smokeEnv(),
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
@@ -314,7 +298,7 @@ function startProcess(name, command, args, options = {}) {
 
 function runCommand(command, args, options = {}) {
   const result = spawnSync(command, args, {
-    cwd: rootDir,
+    cwd: options.cwd ?? rootDir,
     env: options.env ?? process.env,
     encoding: "utf8",
     stdio: "pipe",
@@ -327,6 +311,14 @@ function runCommand(command, args, options = {}) {
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
   return result.stdout;
+}
+
+function webBin(name) {
+  return path.join(webDir, "node_modules", ".bin", name);
+}
+
+function workerBin(name) {
+  return path.join(workerDir, "node_modules", ".bin", name);
 }
 
 async function assertPortFree(port, label) {
