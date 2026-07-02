@@ -16,7 +16,6 @@ function stubServerEnv() {
   vi.stubEnv("DATABASE_URL", "postgres://drawi:drawi@localhost:5432/drawi");
   vi.stubEnv("BETTER_AUTH_SECRET", "better-auth-secret-for-tests");
   vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
-  vi.stubEnv("LIVEKIT_URL", "ws://localhost:7880");
   vi.stubEnv("NEXT_PUBLIC_LIVEKIT_URL", "ws://localhost:7880");
   vi.stubEnv("LIVEKIT_API_KEY", "devkey");
   vi.stubEnv("LIVEKIT_API_SECRET", "secret");
@@ -61,5 +60,28 @@ describe("sync token helpers", () => {
     expect(verifySyncCookieValue(`${payload}.short`)).toBeNull();
     expect(verifySyncCookieValue(`${payload.slice(0, -1)}a.${signature}`)).toBeNull();
     expect(verifySyncCookieValue(createSyncCookieValue(syncClaims, -1))).toBeNull();
+  });
+
+  it("creates deterministic worker service signatures", async () => {
+    const { createSyncWorkerServiceSignature } =
+      await import("../server/services/checkpoint-snapshots");
+
+    expect(
+      createSyncWorkerServiceSignature({
+        method: "post",
+        path: "/api/checkpoints/export",
+        timestamp: 123,
+        body: JSON.stringify({ roomId: "room-1", storageKey: "checkpoints/board-1/one.json" }),
+        secret: "sync-cookie-secret-for-tests",
+      }),
+    ).toBe(
+      createSyncWorkerServiceSignature({
+        method: "POST",
+        path: "/api/checkpoints/export",
+        timestamp: 123,
+        body: JSON.stringify({ roomId: "room-1", storageKey: "checkpoints/board-1/one.json" }),
+        secret: "sync-cookie-secret-for-tests",
+      }),
+    );
   });
 });

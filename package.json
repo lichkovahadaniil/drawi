@@ -4,19 +4,22 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev:web": "pnpm --filter @drawi/web dev",
+    "dev:web": "sh scripts/with-root-env.sh pnpm --filter @drawi/web dev",
     "dev:sync": "pnpm --filter @drawi/sync-worker dev",
     "dev:livekit": "livekit-server --dev",
     "dev:db": "scripts/dev-db.sh",
-    "build": "pnpm --filter @drawi/web build && pnpm --filter @drawi/sync-worker build",
+    "build": "sh scripts/with-root-env.sh pnpm --filter @drawi/web build && pnpm --filter @drawi/sync-worker build",
+    "deploy:sync": "pnpm --filter @drawi/sync-worker deploy",
     "lint": "eslint .",
     "typecheck": "pnpm --filter @drawi/web typecheck && pnpm --filter @drawi/sync-worker typecheck",
     "test": "pnpm --filter @drawi/web test",
+    "smoke:runtime": "node scripts/runtime-smoke.mjs",
+    "smoke:local": "node scripts/local-runtime-smoke.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:generate": "pnpm --filter @drawi/web db:generate",
-    "db:migrate": "pnpm --filter @drawi/web db:migrate",
-    "db:seed": "pnpm --filter @drawi/web db:seed"
+    "db:generate": "sh scripts/with-root-env.sh pnpm --filter @drawi/web db:generate",
+    "db:migrate": "sh scripts/with-root-env.sh pnpm --filter @drawi/web db:migrate",
+    "db:seed": "sh scripts/with-root-env.sh pnpm --filter @drawi/web db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

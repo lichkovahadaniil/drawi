@@ -20,14 +20,6 @@ export function canViewBoard(
   return Boolean(activeAccessFor(actor, access));
 }
 
-export function canOpenBoardByLink(board: BoardAuthRecord) {
-  return board.status === "active" && board.visibility === "public";
-}
-
-export function canListBoardOnPublicProfile(board: BoardAuthRecord) {
-  return board.status === "active" && board.visibility === "public";
-}
-
 export function canListBoardInLibrary(
   actor: Actor,
   board: BoardAuthRecord,

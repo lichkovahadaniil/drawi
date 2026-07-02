@@ -1,18 +1,25 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { authClient } from "@/server/auth/client";
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setIsReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <form
       className="drawi-panel grid gap-4 p-6"
+      method="post"
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -60,8 +67,14 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         />
       </label>
       {error ? <p className="text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
-      <button className="drawi-button" type="submit" disabled={isPending}>
-        {isPending ? "Working..." : mode === "sign-up" ? "Create account" : "Sign in"}
+      <button className="drawi-button" type="submit" disabled={!isReady || isPending}>
+        {!isReady
+          ? "Loading..."
+          : isPending
+            ? "Working..."
+            : mode === "sign-up"
+              ? "Create account"
+              : "Sign in"}
       </button>
     </form>
   );
@@ -69,5 +82,6 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
 function getSafeNextPath(next: string | null) {
   if (next?.startsWith("/join/")) return next as `/join/${string}`;
+  if (next?.startsWith("/u/")) return next as `/u/${string}`;
   return "/app";
 }

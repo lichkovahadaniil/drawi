@@ -304,7 +304,7 @@ export const checkpoints = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     label: text("label").notNull(),
     snapshotStorageKey: text("snapshot_storage_key").notNull(),
-    tldrawSchemaVersion: integer("tldraw_schema_version").notNull().default(1),
+    sceneSchemaVersion: integer("tldraw_schema_version").notNull().default(1),
     source: checkpointSourceEnum("source").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

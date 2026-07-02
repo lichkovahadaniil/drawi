@@ -47,10 +47,10 @@ export class DrawiBoardDurableObject extends DurableObject {
     );
   }
 
-  private readonly router = AutoRouter({ catch: (e) => error(e) }).get(
-    "/api/connect/:roomId",
-    (request) => this.handleConnect(request),
-  );
+  private readonly router = AutoRouter({ catch: (e) => error(e) })
+    .get("/api/connect/:roomId", (request) => this.handleConnect(request))
+    .get("/api/internal/snapshot/:roomId", () => this.handleReadSnapshot())
+    .put("/api/internal/snapshot/:roomId", (request) => this.handleWriteSnapshot(request));
 
   fetch(request: Request): Response | Promise<Response> {
     return this.router.fetch(request);
@@ -82,6 +82,24 @@ export class DrawiBoardDurableObject extends DurableObject {
     );
 
     return new Response(null, { status: 101, webSocket: clientWebSocket });
+  }
+
+  async handleReadSnapshot() {
+    const snapshot = this.readSnapshot();
+    return Response.json(snapshot);
+  }
+
+  async handleWriteSnapshot(request: Request) {
+    const body = await request.json<unknown>().catch(() => null);
+    if (!isRecord(body) || !isSceneSnapshot(body.scene)) return error(400, "Invalid snapshot");
+
+    const snapshotJson = JSON.stringify(body.scene);
+    if (new TextEncoder().encode(snapshotJson).byteLength > MAX_SNAPSHOT_BYTES) {
+      return error(413, "Board snapshot is too large");
+    }
+
+    const version = this.saveSnapshot(snapshotJson);
+    return Response.json({ ok: true, version });
   }
 
   override async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
@@ -141,7 +159,12 @@ export class DrawiBoardDurableObject extends DurableObject {
     const [row] = rows;
     if (!row) return { version: 0, scene: EMPTY_SCENE };
 
-    const parsed: unknown = JSON.parse(row.snapshot);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(row.snapshot);
+    } catch {
+      return { version: row.version, scene: EMPTY_SCENE };
+    }
     if (!isSceneSnapshot(parsed)) return { version: row.version, scene: EMPTY_SCENE };
     return { version: row.version, scene: parsed };
   }

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "XDG_CONFIG_HOME=/private/tmp/drawi-xdg-config WRANGLER_CACHE_DIR=/private/tmp/drawi-wrangler-cache WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler dev --local --port 8787",
     "build": "XDG_CONFIG_HOME=/private/tmp/drawi-xdg-config WRANGLER_CACHE_DIR=/private/tmp/drawi-wrangler-cache WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler deploy --dry-run --outdir dist",
+    "deploy": "WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler deploy --keep-vars",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "types": "wrangler types"

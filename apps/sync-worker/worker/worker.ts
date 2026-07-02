@@ -1,12 +1,18 @@
 import { handleUnfurlRequest } from "cloudflare-workers-unfurl";
 import { AutoRouter, error, IRequest } from "itty-router";
-import { handleAssetDownload, handleAssetUpload } from "./assetUploads";
+import {
+  assetError,
+  handleAssetDownload,
+  handleAssetOptions,
+  handleAssetUpload,
+} from "./assetUploads";
+import { handleCheckpointExport, handleCheckpointRestore } from "./checkpointSnapshots";
 import { verifySyncAccess } from "./auth";
 
 export { DrawiBoardDurableObject } from "./DrawiBoardDurableObject";
 
-// we use itty-router (https://itty.dev/) to handle routing. in this example we turn on CORS because
-// we're hosting the worker separately to the client. you should restrict this to your own domain.
+// We use itty-router (https://itty.dev/) to handle the Worker boundary. Asset routes carry
+// their own CORS headers because the sync worker is hosted separately from the web app.
 const router = AutoRouter<IRequest, [env: Env, ctx: ExecutionContext]>({
   catch: (e) => {
     console.error(e);
@@ -17,8 +23,12 @@ const router = AutoRouter<IRequest, [env: Env, ctx: ExecutionContext]>({
   .get("/api/connect/:roomId", async (request, env) => {
     const roomId = request.params.roomId;
     if (!roomId) return error(400, "Missing room id");
-    const claims = await verifySyncAccess(request, env, roomId);
+    const roomUrl = new URL(request.url);
+    const sessionId = roomUrl.searchParams.get("sessionId");
+    if (!sessionId) return error(400, "Missing session id");
+    const claims = await verifySyncAccess(request, env, roomId, sessionId);
     if (!claims) return error(403, "Forbidden");
+    roomUrl.searchParams.delete("accessToken");
 
     const id = env.DRAWI_BOARD_DURABLE_OBJECT.idFromName(roomId);
     const room = env.DRAWI_BOARD_DURABLE_OBJECT.get(id);
@@ -26,24 +36,29 @@ const router = AutoRouter<IRequest, [env: Env, ctx: ExecutionContext]>({
     headers.set("x-drawi-user-id", claims.userId);
     headers.set("x-drawi-permission", claims.permission);
     headers.set("x-drawi-board-id", claims.boardId);
-    return room.fetch(request.url, { headers, body: request.body });
+    return room.fetch(roomUrl.toString(), { headers, body: request.body });
   })
+
+  .post("/api/checkpoints/export", handleCheckpointExport)
+  .post("/api/checkpoints/restore", handleCheckpointRestore)
+
+  .options("/api/uploads/:roomId/:uploadId", handleAssetOptions)
 
   // assets can be uploaded to the bucket under /uploads after sync access verification:
   .post("/api/uploads/:roomId/:uploadId", async (request, env) => {
     const roomId = request.params.roomId;
-    if (!roomId) return error(400, "Missing room id");
+    if (!roomId) return assetError(400, "Missing room id");
     const claims = await verifySyncAccess(request, env, roomId);
-    if (!claims || claims.permission === "view") return error(403, "Forbidden");
+    if (!claims || claims.permission === "view") return assetError(403, "Forbidden");
     return handleAssetUpload(request, env);
   })
 
   // they can be retrieved from the bucket too:
   .get("/api/uploads/:roomId/:uploadId", async (request, env, ctx) => {
     const roomId = request.params.roomId;
-    if (!roomId) return error(400, "Missing room id");
+    if (!roomId) return assetError(400, "Missing room id");
     const claims = await verifySyncAccess(request, env, roomId);
-    if (!claims) return error(403, "Forbidden");
+    if (!claims) return assetError(403, "Forbidden");
     return handleAssetDownload(request, env, ctx);
   })
 

@@ -1,4 +1,5 @@
 const COOKIE_NAME = "drawi_sync_access";
+const MAX_SERVICE_AUTH_SKEW_SECONDS = 5 * 60;
 
 export interface SyncAccessClaims {
   userId: string;
@@ -18,6 +19,16 @@ function parseCookies(header: string | null) {
     cookies.set(rawName, rawValue.join("="));
   }
   return cookies;
+}
+
+function getSyncAccessToken(request: Request) {
+  const authorization = request.headers.get("authorization");
+  if (authorization?.startsWith("Bearer ")) return authorization.slice("Bearer ".length).trim();
+
+  const queryToken = new URL(request.url).searchParams.get("accessToken");
+  if (queryToken) return queryToken;
+
+  return parseCookies(request.headers.get("cookie")).get(COOKIE_NAME) ?? null;
 }
 
 function base64UrlToBytes(value: string) {
@@ -51,6 +62,12 @@ async function sign(payload: string, secret: string) {
   return bytesToBase64Url(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload)));
 }
 
+async function hashBody(bodyText: string) {
+  return bytesToBase64Url(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(bodyText)),
+  );
+}
+
 function timingSafeEqual(left: string, right: string) {
   if (left.length !== right.length) return false;
   let diff = 0;
@@ -60,20 +77,51 @@ function timingSafeEqual(left: string, right: string) {
   return diff === 0;
 }
 
-export async function verifySyncAccess(request: Request, env: Env, roomId: string) {
-  const cookie = parseCookies(request.headers.get("cookie")).get(COOKIE_NAME);
-  if (!cookie) return null;
+export async function verifySyncAccess(
+  request: Request,
+  env: Env,
+  roomId: string,
+  sessionId?: string | null,
+) {
+  const accessToken = getSyncAccessToken(request);
+  if (!accessToken) return null;
 
-  const [payload, signature] = cookie.split(".");
+  const [payload, signature] = accessToken.split(".");
   if (!payload || !signature) return null;
 
   const expected = await sign(payload, env.SYNC_COOKIE_SECRET);
   if (!timingSafeEqual(expected, signature)) return null;
 
-  const claims = JSON.parse(
-    new TextDecoder().decode(base64UrlToBytes(payload)),
-  ) as SyncAccessClaims;
+  let claims: SyncAccessClaims;
+  try {
+    claims = JSON.parse(new TextDecoder().decode(base64UrlToBytes(payload))) as SyncAccessClaims;
+  } catch {
+    return null;
+  }
+
   if (claims.exp <= Math.floor(Date.now() / 1000)) return null;
   if (claims.roomId !== roomId) return null;
+  if (sessionId && claims.sessionId !== sessionId) return null;
   return claims;
+}
+
+export async function verifyServiceRequest(request: Request, env: Env, bodyText: string) {
+  const timestamp = request.headers.get("x-drawi-service-timestamp");
+  const signature = request.headers.get("x-drawi-service-signature");
+  if (!timestamp || !signature) return false;
+
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds)) return false;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - timestampSeconds) > MAX_SERVICE_AUTH_SKEW_SECONDS) return false;
+
+  const url = new URL(request.url);
+  const payload = [
+    request.method.toUpperCase(),
+    url.pathname,
+    String(timestampSeconds),
+    await hashBody(bodyText),
+  ].join("\n");
+  const expected = await sign(payload, env.SYNC_COOKIE_SECRET);
+  return timingSafeEqual(expected, signature);
 }

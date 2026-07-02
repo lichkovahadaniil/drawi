@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CollaborativeBoard } from "@/features/board/collaborative-board";
 import { PrivateNotesPanel } from "@/features/board/private-notes-panel";
 import { LiveKitPanel } from "@/features/session/livekit-panel";
@@ -18,6 +18,8 @@ export default async function SessionPage({
   const { invite } = await searchParams;
   const data = await getSessionPage(sessionId);
   if (!data || !data.currentMembership) notFound();
+  if (data.currentMembership.leftAt) redirect("/app/boards");
+  if (data.liveSession.status !== "live") redirect(`/app/boards/${data.board.id}`);
 
   const isTutor = data.currentMembership.role === "tutor";
   const canEdit = isTutor || data.currentMembership.canEditBoard;

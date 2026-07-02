@@ -6,7 +6,11 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      include: ["features/**/*.ts", "server/domain/**/*.ts"],
+      include: [
+        "features/**/*.ts",
+        "server/domain/**/*.ts",
+        "server/services/checkpoint-snapshots.ts",
+      ],
       exclude: ["**/*.d.ts"],
       reporter: ["text", "json-summary"],
       thresholds: {

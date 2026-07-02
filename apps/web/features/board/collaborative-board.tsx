@@ -1,6 +1,5 @@
 "use client";
 
-import { CaptureUpdateAction } from "@excalidraw/excalidraw";
 import type {
   AppState,
   BinaryFileData,
@@ -12,13 +11,15 @@ import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/ty
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import {
+  authorizeBoardAssetUrl,
   createBoardAssetUrl,
   createBoardSyncConnectUrl,
   encodeBoardClientMessage,
-  ensureBoardSyncCookie,
+  ensureBoardSyncAccess,
   normalizeSyncOrigin,
   parseBoardServerMessage,
   pickSyncedAppState,
+  stripBoardAssetAccessToken,
   type ExcalidrawSceneSnapshot,
 } from "./sync-client";
 
@@ -44,6 +45,7 @@ const EMPTY_SCENE: ExcalidrawSceneSnapshot = {
   appState: null,
   files: {},
 };
+const CAPTURE_UPDATE_NEVER = "NEVER";
 
 export function CollaborativeBoard({
   boardId,
@@ -68,6 +70,7 @@ export function CollaborativeBoard({
   const localChangeEpochRef = useRef(0);
   const pendingRemoteSceneRef = useRef<ExcalidrawSceneSnapshot | null>(null);
   const uploadedFileUrlsRef = useRef(new Map<string, string>());
+  const accessTokenRef = useRef("");
 
   const initialData = useMemo(
     () => ({
@@ -89,15 +92,26 @@ export function CollaborativeBoard({
     }
 
     suppressLocalChangeRef.current = true;
-    const files = Object.values(scene.files);
-    if (files.length) api.addFiles(files);
-    api.updateScene({
-      elements: scene.elements,
-      appState: scene.appState ?? undefined,
-      captureUpdate: CaptureUpdateAction.NEVER,
-    });
-    queueMicrotask(() => {
-      suppressLocalChangeRef.current = false;
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (apiRef.current !== api) {
+          suppressLocalChangeRef.current = false;
+          return;
+        }
+
+        const sceneForCanvas = authorizeSceneFiles(scene, accessTokenRef.current);
+        const files = Object.values(sceneForCanvas.files);
+        if (files.length) api.addFiles(files);
+        api.updateScene({
+          elements: sceneForCanvas.elements,
+          appState: sceneForCanvas.appState ?? undefined,
+          captureUpdate: CAPTURE_UPDATE_NEVER,
+        });
+        queueMicrotask(() => {
+          suppressLocalChangeRef.current = false;
+        });
+      });
     });
   }, []);
 
@@ -108,7 +122,13 @@ export function CollaborativeBoard({
 
       try {
         const scene = latestLocalSceneRef.current;
-        const files = await externalizeFiles(scene.files, syncOrigin, roomId, uploadedFileUrlsRef);
+        const files = await externalizeFiles(
+          scene.files,
+          syncOrigin,
+          roomId,
+          accessTokenRef.current,
+          uploadedFileUrlsRef,
+        );
         if (expectedEpoch !== localChangeEpochRef.current) {
           return;
         }
@@ -176,10 +196,11 @@ export function CollaborativeBoard({
       setConnectionState(retryCount === 0 ? "connecting" : "reconnecting");
 
       try {
-        await ensureBoardSyncCookie(boardId);
+        const access = await ensureBoardSyncAccess(boardId);
         if (closedByEffect) return;
 
-        const socket = new WebSocket(createBoardSyncConnectUrl(syncOrigin, roomId));
+        accessTokenRef.current = access.accessToken;
+        const socket = new WebSocket(createBoardSyncConnectUrl(syncOrigin, roomId, access));
         socketRef.current = socket;
 
         socket.addEventListener("open", () => {
@@ -232,6 +253,8 @@ export function CollaborativeBoard({
       clearReconnect();
       if (pendingSaveTimer !== null) window.clearTimeout(pendingSaveTimer);
       saveTimerRef.current = null;
+      apiRef.current = null;
+      accessTokenRef.current = "";
       socketRef.current?.close();
       socketRef.current = null;
     };
@@ -288,6 +311,7 @@ async function externalizeFiles(
   files: BinaryFiles,
   syncOrigin: string,
   roomId: string,
+  accessToken: string,
   uploadedFileUrlsRef: MutableRefObject<Map<string, string>>,
 ): Promise<BinaryFiles> {
   const nextFiles: BinaryFiles = { ...files };
@@ -295,7 +319,13 @@ async function externalizeFiles(
 
   for (const [fileId, file] of entries) {
     const dataUrl = String(file.dataURL);
-    if (!dataUrl.startsWith("data:")) continue;
+    if (!dataUrl.startsWith("data:")) {
+      const canonicalUrl = stripBoardAssetAccessToken(dataUrl);
+      if (canonicalUrl !== dataUrl) {
+        nextFiles[fileId] = { ...file, dataURL: toExcalidrawDataUrl(canonicalUrl) };
+      }
+      continue;
+    }
 
     const existingUrl = uploadedFileUrlsRef.current.get(fileId);
     if (existingUrl) {
@@ -306,9 +336,10 @@ async function externalizeFiles(
     if (!file.mimeType.startsWith("image/")) continue;
 
     const objectName = `${fileId}-${file.mimeType.replace(/[^a-zA-Z0-9._-]+/g, "-")}`;
-    const uploadUrl = createBoardAssetUrl(syncOrigin, roomId, objectName);
+    const canonicalUploadUrl = createBoardAssetUrl(syncOrigin, roomId, objectName);
+    const authorizedUploadUrl = createBoardAssetUrl(syncOrigin, roomId, objectName, accessToken);
     const blob = await fetch(file.dataURL).then((response) => response.blob());
-    const response = await fetch(uploadUrl, {
+    const response = await fetch(authorizedUploadUrl, {
       method: "POST",
       headers: {
         "content-type": file.mimeType,
@@ -320,15 +351,28 @@ async function externalizeFiles(
       throw new Error("Failed to upload board image.");
     }
 
-    uploadedFileUrlsRef.current.set(fileId, uploadUrl);
+    uploadedFileUrlsRef.current.set(fileId, canonicalUploadUrl);
     nextFiles[fileId] = {
       ...file,
-      dataURL: toExcalidrawDataUrl(uploadUrl),
+      dataURL: toExcalidrawDataUrl(canonicalUploadUrl),
       lastRetrieved: Date.now(),
     };
   }
 
   return nextFiles;
+}
+
+function authorizeSceneFiles(scene: ExcalidrawSceneSnapshot, accessToken: string) {
+  const files: BinaryFiles = {};
+
+  for (const [fileId, file] of Object.entries(scene.files) as Array<[string, BinaryFileData]>) {
+    const dataUrl = String(file.dataURL);
+    const authorizedUrl = authorizeBoardAssetUrl(dataUrl, accessToken);
+    files[fileId] =
+      authorizedUrl === dataUrl ? file : { ...file, dataURL: toExcalidrawDataUrl(authorizedUrl) };
+  }
+
+  return { ...scene, files };
 }
 
 function toExcalidrawDataUrl(value: string): DataURL {

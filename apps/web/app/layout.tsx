@@ -2,6 +2,7 @@ import "@livekit/components-styles";
 import "@excalidraw/excalidraw/index.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeBootScript } from "@/components/theme-boot-script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,8 +22,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="drawi-shell antialiased">{children}</body>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      data-drawi-theme="day"
+      style={{ colorScheme: "light" }}
+      suppressHydrationWarning
+    >
+      <body className="drawi-shell antialiased">
+        <ThemeBootScript initialTheme="day" />
+        {children}
+      </body>
     </html>
   );
 }

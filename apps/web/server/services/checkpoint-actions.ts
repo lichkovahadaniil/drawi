@@ -1,21 +1,28 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getRequiredUser } from "../auth/auth";
 import { getDb } from "../db/client";
-import { auditEvents, boards, checkpoints, libraryItems } from "../db/schema";
+import { auditEvents, boardAccess, boards, checkpoints, libraryItems } from "../db/schema";
 import { canManageBoard, canRestoreCheckpointAsNewBoard } from "../domain/permissions";
+import { restoreCheckpointSnapshot, writeCheckpointSnapshot } from "./checkpoint-snapshots";
 
 export async function createCheckpointAction(boardId: string) {
   const user = await getRequiredUser();
   if (!user) redirect("/sign-in");
   const db = getDb();
   const [board] = await db.select().from(boards).where(eq(boards.id, boardId));
-  if (!board || !canManageBoard(user, board)) throw new Error("Forbidden.");
+  const accessRows = await db
+    .select()
+    .from(boardAccess)
+    .where(and(eq(boardAccess.boardId, boardId), eq(boardAccess.userId, user.id)));
+  if (!board || !canManageBoard(user, board, accessRows)) throw new Error("Forbidden.");
 
   const snapshotStorageKey = `checkpoints/${boardId}/${crypto.randomUUID()}.json`;
+  await writeCheckpointSnapshot({ roomId: board.roomId, storageKey: snapshotStorageKey });
+
   await db.insert(checkpoints).values({
     boardId,
     createdByUserId: user.id,
@@ -33,7 +40,19 @@ export async function restoreCheckpointAsNewBoardAction(checkpointId: string) {
   const [checkpoint] = await db.select().from(checkpoints).where(eq(checkpoints.id, checkpointId));
   if (!checkpoint) throw new Error("Checkpoint not found.");
   const [board] = await db.select().from(boards).where(eq(boards.id, checkpoint.boardId));
-  if (!board || !canRestoreCheckpointAsNewBoard(user, board)) throw new Error("Forbidden.");
+  const accessRows = await db
+    .select()
+    .from(boardAccess)
+    .where(and(eq(boardAccess.boardId, checkpoint.boardId), eq(boardAccess.userId, user.id)));
+  if (!board || !canRestoreCheckpointAsNewBoard(user, board, accessRows)) {
+    throw new Error("Forbidden.");
+  }
+
+  const restoredRoomId = crypto.randomUUID();
+  await restoreCheckpointSnapshot({
+    roomId: restoredRoomId,
+    storageKey: checkpoint.snapshotStorageKey,
+  });
 
   const [copy] = await db.transaction(async (tx) => {
     const [newBoard] = await tx
@@ -41,7 +60,7 @@ export async function restoreCheckpointAsNewBoardAction(checkpointId: string) {
       .values({
         ownerId: user.id,
         title: `${board.title} restored`,
-        roomId: crypto.randomUUID(),
+        roomId: restoredRoomId,
         sourceBoardId: board.id,
         sourceCheckpointId: checkpoint.id,
       })

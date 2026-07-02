@@ -7,15 +7,6 @@ export type SessionRole = "tutor" | "student";
 export type LiveSessionStatus = "live" | "ended";
 export type LibraryRelationship = "created" | "learned";
 export type CheckpointSource = "manual" | "session_end";
-export type MediaConnectionState =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "disconnected"
-  | "permission_denied"
-  | "failed";
-export type BoardConnectionState = "connecting" | "connected" | "reconnecting" | "unavailable";
 
 export interface Actor {
   id: string;

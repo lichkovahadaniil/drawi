@@ -1,4 +1,4 @@
-import { error, IRequest } from "itty-router";
+import type { IRequest } from "itty-router";
 
 const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -8,6 +8,26 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "image/webp",
   "image/svg+xml",
 ]);
+const ASSET_CORS_HEADERS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, OPTIONS",
+  "access-control-allow-headers": "content-type, authorization",
+  "access-control-max-age": "86400",
+};
+
+export function handleAssetOptions() {
+  return new Response(null, { status: 204, headers: ASSET_CORS_HEADERS });
+}
+
+export function assetError(status: number, message = "") {
+  return new Response(message, { status, headers: ASSET_CORS_HEADERS });
+}
+
+function setAssetCorsHeaders(headers: Headers) {
+  for (const [key, value] of Object.entries(ASSET_CORS_HEADERS)) {
+    headers.set(key, value);
+  }
+}
 
 // assets are stored in the bucket under the /uploads path
 function getAssetObjectName(roomId: string, uploadId: string) {
@@ -26,37 +46,40 @@ declare global {
 export async function handleAssetUpload(request: IRequest, env: Env) {
   const uploadId = request.params.uploadId;
   const roomId = request.params.roomId;
-  if (!uploadId) return error(400, "Missing upload id");
-  if (!roomId) return error(400, "Missing room id");
+  if (!uploadId) return assetError(400, "Missing upload id");
+  if (!roomId) return assetError(400, "Missing room id");
   const objectName = getAssetObjectName(roomId, uploadId);
 
   const contentType = request.headers.get("content-type") ?? "";
   if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
-    return error(400, "Invalid content type");
+    return assetError(400, "Invalid content type");
   }
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
   if (!Number.isFinite(contentLength) || contentLength <= 0 || contentLength > MAX_UPLOAD_BYTES) {
-    return error(413, "Invalid upload size");
+    return assetError(413, "Invalid upload size");
   }
 
   if (await env.DRAWI_BOARD_BUCKET.head(objectName)) {
-    return error(409, "Upload already exists");
+    return assetError(409, "Upload already exists");
   }
 
   await env.DRAWI_BOARD_BUCKET.put(objectName, request.body, {
-    httpMetadata: request.headers,
+    httpMetadata: {
+      contentType,
+      cacheControl: "public, max-age=31536000, immutable",
+    },
   });
 
-  return { ok: true };
+  return Response.json({ ok: true }, { headers: ASSET_CORS_HEADERS });
 }
 
 // when a user downloads an asset, we retrieve it from the bucket. we also cache the response for performance.
 export async function handleAssetDownload(request: IRequest, env: Env, ctx: ExecutionContext) {
   const uploadId = request.params.uploadId;
   const roomId = request.params.roomId;
-  if (!uploadId) return error(400, "Missing upload id");
-  if (!roomId) return error(400, "Missing room id");
+  if (!uploadId) return assetError(400, "Missing upload id");
+  if (!roomId) return assetError(400, "Missing room id");
   const objectName = getAssetObjectName(roomId, uploadId);
 
   // if we have a cached response for this request (automatically handling ranges etc.), return it
@@ -73,7 +96,7 @@ export async function handleAssetDownload(request: IRequest, env: Env, ctx: Exec
   });
 
   if (!object) {
-    return error(404);
+    return assetError(404);
   }
 
   // write the relevant metadata to the response headers
@@ -87,7 +110,7 @@ export async function handleAssetDownload(request: IRequest, env: Env, ctx: Exec
   // we set CORS headers so all clients can access assets. we do this here so our `cors` helper in
   // worker.ts doesn't try to set extra cors headers on responses that have been read from the
   // cache, which isn't allowed by cloudflare.
-  headers.set("access-control-allow-origin", "*");
+  setAssetCorsHeaders(headers);
 
   // Prevent XSS from user-uploaded SVGs (or any file served with an executable content-type).
   headers.set("content-security-policy", "default-src 'none'");

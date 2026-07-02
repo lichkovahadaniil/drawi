@@ -2,9 +2,11 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 node_modules/
 .pnpm-store/
 .local/
+.dev.vars
 .next/
 out/
 dist/
@@ -14,6 +16,7 @@ playwright-report/
 test-results/
 .turbo/
 .cache/
+.vercel/
 .wrangler/state/
 .wrangler/tmp/
 **/.wrangler/state/

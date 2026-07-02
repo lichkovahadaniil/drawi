@@ -50,12 +50,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const sessionId = crypto.randomUUID();
   const cookieValue = createSyncCookieValue({
     userId: user.id,
     boardId: board.id,
     roomId: board.roomId,
     permission,
-    sessionId: crypto.randomUUID(),
+    sessionId,
   });
 
   const cookieStore = await cookies();
@@ -67,5 +68,5 @@ export async function POST(request: Request) {
     path: "/",
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, sessionId, accessToken: cookieValue });
 }

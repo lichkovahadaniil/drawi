@@ -7,6 +7,10 @@ export const DEFAULT_DRAWI_SYNC_ORIGIN = "http://localhost:8787";
 export const BOARD_SYNC_SESSION_ENDPOINT = "/api/board-sync/session-cookie";
 
 export type BoardSyncFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+export type BoardSyncAccess = {
+  sessionId: string;
+  accessToken: string;
+};
 
 export type SyncedExcalidrawAppState = Pick<
   AppState,
@@ -70,22 +74,62 @@ export function normalizeSyncOrigin(syncOrigin?: string | null) {
 export function createBoardSyncConnectUrl(
   syncOrigin: string,
   roomId: string,
-  sessionId = crypto.randomUUID(),
+  access: BoardSyncAccess = {
+    sessionId: crypto.randomUUID(),
+    accessToken: "",
+  },
 ) {
   const url = new URL(
     `${normalizeSyncOrigin(syncOrigin)}/api/connect/${encodeURIComponent(roomId)}`,
   );
   if (url.protocol === "http:") url.protocol = "ws:";
   if (url.protocol === "https:") url.protocol = "wss:";
-  url.searchParams.set("sessionId", sessionId);
+  url.searchParams.set("sessionId", access.sessionId);
+  if (access.accessToken) url.searchParams.set("accessToken", access.accessToken);
   return url.toString();
 }
 
-export function createBoardAssetUrl(syncOrigin: string, roomId: string, objectName: string) {
-  return `${normalizeSyncOrigin(syncOrigin)}/api/uploads/${encodeURIComponent(roomId)}/${encodeURIComponent(objectName)}`;
+export function createBoardAssetUrl(
+  syncOrigin: string,
+  roomId: string,
+  objectName: string,
+  accessToken?: string,
+) {
+  const url = new URL(
+    `${normalizeSyncOrigin(syncOrigin)}/api/uploads/${encodeURIComponent(roomId)}/${encodeURIComponent(objectName)}`,
+  );
+  if (accessToken) url.searchParams.set("accessToken", accessToken);
+  return url.toString();
 }
 
-export async function ensureBoardSyncCookie(
+export function authorizeBoardAssetUrl(value: string, accessToken: string) {
+  if (!accessToken) return value;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return value;
+  }
+
+  if (!url.pathname.includes("/api/uploads/")) return value;
+  url.searchParams.set("accessToken", accessToken);
+  return url.toString();
+}
+
+export function stripBoardAssetAccessToken(value: string) {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return value;
+  }
+
+  if (!url.pathname.includes("/api/uploads/")) return value;
+  url.searchParams.delete("accessToken");
+  return url.toString();
+}
+
+export async function ensureBoardSyncAccess(
   boardId: string,
   fetcher: BoardSyncFetch = globalThis.fetch,
 ) {
@@ -98,7 +142,20 @@ export async function ensureBoardSyncCookie(
   if (!response.ok) {
     throw new Error("Collaborative session unavailable.");
   }
+
+  const data = (await response.json()) as { sessionId?: unknown; accessToken?: unknown };
+  if (
+    typeof data.sessionId !== "string" ||
+    !data.sessionId ||
+    typeof data.accessToken !== "string" ||
+    !data.accessToken
+  ) {
+    throw new Error("Collaborative session unavailable.");
+  }
+  return { sessionId: data.sessionId, accessToken: data.accessToken };
 }
+
+export const ensureBoardSyncCookie = ensureBoardSyncAccess;
 
 export function createBoardSyncUriResolver({
   boardId,
@@ -114,8 +171,11 @@ export function createBoardSyncUriResolver({
   sessionId?: string;
 }) {
   return async () => {
-    await ensureBoardSyncCookie(boardId, fetcher);
-    return createBoardSyncConnectUrl(syncOrigin, roomId, sessionId);
+    const issuedAccess = await ensureBoardSyncAccess(boardId, fetcher);
+    return createBoardSyncConnectUrl(syncOrigin, roomId, {
+      sessionId: sessionId ?? issuedAccess.sessionId,
+      accessToken: issuedAccess.accessToken,
+    });
   };
 }
 

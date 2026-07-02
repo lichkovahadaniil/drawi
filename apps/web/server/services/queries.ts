@@ -115,13 +115,6 @@ export async function getProfile() {
   return { user, profile, ...connections };
 }
 
-export async function getAccessibleBoardAccess(userId: string, boardId: string) {
-  return getDb()
-    .select()
-    .from(boardAccess)
-    .where(and(eq(boardAccess.boardId, boardId), or(eq(boardAccess.userId, userId))));
-}
-
 export async function getPublicProfilePage(handle: string, tab?: string) {
   const normalizedHandle = normalizeHandle(handle);
   const db = getDb();

@@ -24,6 +24,7 @@ import {
   isInviteExpired,
   normalizeInviteCodeInput,
 } from "../domain/invites";
+import { writeCheckpointSnapshot } from "./checkpoint-snapshots";
 
 export async function startLessonAction(formData: FormData) {
   const user = await getRequiredUser();
@@ -175,11 +176,18 @@ export async function endSessionAction(sessionId: string) {
   if (!liveSession) throw new Error("Session not found.");
 
   const [board] = await db.select().from(boards).where(eq(boards.id, liveSession.boardId));
-  if (!board || !canManageBoard(user, board)) throw new Error("Forbidden.");
+  const accessRows = await db
+    .select()
+    .from(boardAccess)
+    .where(and(eq(boardAccess.boardId, liveSession.boardId), eq(boardAccess.userId, user.id)));
+  if (!board || !canManageBoard(user, board, accessRows)) throw new Error("Forbidden.");
 
   if (liveSession.status === "ended") {
     redirect(`/app/boards/${liveSession.boardId}`);
   }
+
+  const snapshotKey = `checkpoints/${liveSession.boardId}/${crypto.randomUUID()}.json`;
+  await writeCheckpointSnapshot({ roomId: board.roomId, storageKey: snapshotKey });
 
   await db.transaction(async (tx) => {
     await tx
@@ -187,7 +195,6 @@ export async function endSessionAction(sessionId: string) {
       .set({ status: "ended", endedAt: new Date(), updatedAt: new Date() })
       .where(eq(liveSessions.id, sessionId));
 
-    const snapshotKey = `checkpoints/${liveSession.boardId}/${crypto.randomUUID()}.json`;
     await tx.insert(checkpoints).values({
       boardId: liveSession.boardId,
       sessionId: liveSession.id,

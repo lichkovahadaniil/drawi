@@ -6,37 +6,52 @@ drawi is a visual learning MVP for 1:1 lessons: a tutor and a student meet on a 
 
 The first vertical slice intentionally excludes marketplace, billing, scheduling, social metrics, public comments, AI, recordings, and public creator pages.
 
-## Worktree Layout
+## Local Layout
 
-Local worktrees are kept under:
+Main integrated checkout:
+
+```text
+/Users/daniillickovaha/Documents/drawi
+```
+
+Older auxiliary worktrees, when still needed, are kept under:
 
 ```text
 /Users/daniillickovaha/Documents/drawi_trees/
-├── drawi
 ├── drawi-excalidraw-board-sync
 └── drawi-product-suite-integration
 ```
 
-Use `drawi-product-suite-integration` on branch `codex/drawi-product-suite` for the integrated app.
+Use `drawi` on branch `main` for the integrated app.
 
 ## Local Development
 
-1. `cd /Users/daniillickovaha/Documents/drawi_trees/drawi-product-suite-integration`.
+1. `cd /Users/daniillickovaha/Documents/drawi`.
 2. Copy `.env.example` to `.env`.
-3. Start PostgreSQL: `pnpm dev:db`.
-4. Start LiveKit locally: `pnpm dev:livekit`.
-5. Start the sync worker: `pnpm dev:sync`.
-6. Start the web app: `pnpm dev:web`.
+3. Copy `apps/sync-worker/.dev.vars.example` to `apps/sync-worker/.dev.vars`.
+4. Start PostgreSQL: `pnpm dev:db`.
+5. Start LiveKit locally: `pnpm dev:livekit`.
+6. Start the sync worker: `pnpm dev:sync`.
+7. Start the web app: `pnpm dev:web`.
 
 Useful commands:
 
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`
+- `pnpm smoke:runtime`
+- `pnpm smoke:local`
 - `pnpm build`
 - `pnpm db:generate`
 - `pnpm db:migrate`
 - `pnpm db:seed`
+
+Free no-card hosting notes are in `docs/free-hosting.md`.
+
+`pnpm smoke:local` is the repeatable full local smoke. It creates a disposable
+Postgres database, applies migrations, starts LiveKit, the sync Worker, and the
+web app, runs the tutor/student browser smoke, then cleans up local runtime
+state.
 
 ## Important Constraints
 

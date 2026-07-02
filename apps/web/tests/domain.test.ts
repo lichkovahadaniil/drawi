@@ -35,9 +35,7 @@ import {
   canIssueSyncAccess,
   canJoinSession,
   canListBoardInLibrary,
-  canListBoardOnPublicProfile,
   canManageBoard,
-  canOpenBoardByLink,
   canReadStudentNote,
   canRestoreCheckpointAsNewBoard,
   canUsePrivateNotes,
@@ -291,15 +289,11 @@ describe("permission helpers", () => {
     const deletedPublicBoard = { ...publicBoard, status: "deleted" as const };
     const activeAccess = [{ userId: "student", permission: "view" as const, revokedAt: null }];
 
-    expect(canListBoardOnPublicProfile(publicBoard)).toBe(true);
-    expect(canListBoardOnPublicProfile(privateBoard)).toBe(false);
-    expect(canListBoardOnPublicProfile(friendsBoard)).toBe(false);
-    expect(canListBoardOnPublicProfile(deletedPublicBoard)).toBe(false);
-
-    expect(canOpenBoardByLink(publicBoard)).toBe(true);
-    expect(canOpenBoardByLink(privateBoard)).toBe(false);
-    expect(canOpenBoardByLink(friendsBoard)).toBe(false);
-    expect(canOpenBoardByLink(deletedPublicBoard)).toBe(false);
+    expect(canListBoardOnChannel(null, "tutor", publicBoard)).toBe(true);
+    expect(canListBoardOnChannel(null, "tutor", privateBoard)).toBe(false);
+    expect(canListBoardOnChannel(null, "tutor", friendsBoard)).toBe(false);
+    expect(canListBoardOnChannel({ id: "tutor" }, "tutor", privateBoard)).toBe(true);
+    expect(canListBoardOnChannel(null, "tutor", deletedPublicBoard)).toBe(false);
 
     expect(canListBoardInLibrary(student, privateBoard, activeAccess)).toBe(true);
     expect(canListBoardInLibrary(student, friendsBoard, activeAccess)).toBe(true);

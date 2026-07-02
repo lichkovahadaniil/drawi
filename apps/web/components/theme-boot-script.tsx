@@ -1,3 +1,4 @@
+import Script from "next/script";
 import {
   DRAWI_THEME_COOKIE,
   DRAWI_THEME_MAX_AGE,
@@ -15,6 +16,12 @@ export function ThemeBootScript({ initialTheme }: { initialTheme: DrawiTheme }) 
   var theme = fallback;
 
   try {
+    var match = document.cookie.match(new RegExp("(?:^|; )" + cookieName + "=([^;]*)"));
+    var cookieTheme = match ? decodeURIComponent(match[1]) : null;
+    if (cookieTheme === "day" || cookieTheme === "night") {
+      theme = cookieTheme;
+    }
+
     var stored = window.localStorage.getItem(storageKey);
     if (stored === "day" || stored === "night") {
       theme = stored;
@@ -27,5 +34,11 @@ export function ThemeBootScript({ initialTheme }: { initialTheme: DrawiTheme }) 
 })();
 `;
 
-  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+  return (
+    <Script
+      id="drawi-theme-boot"
+      strategy="afterInteractive"
+      dangerouslySetInnerHTML={{ __html: script }}
+    />
+  );
 }
